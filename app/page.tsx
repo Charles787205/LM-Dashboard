@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Sidebar from '../components/sidebar';
+import {Sidebar} from '@/components';
 import { 
   BarChart3, 
   Users, 
@@ -73,36 +73,36 @@ export default function Dashboard() {
 
   const stats = [
     {
-      title: 'Inbound',
-      value: '$45,231.89',
+      title: 'Inbound Parcels',
+      value: '45,231',
       change: '+20.1%',
       trend: 'up',
-      icon: DollarSign,
+      icon: TrendingUp,
       color: 'text-green-600'
     },
     {
-      title: 'Outbound',
-      value: '2,350',
-      change: '+180.1%',
+      title: 'Outbound Parcels',
+      value: '42,350',
+      change: '+18.5%',
       trend: 'up',
-      icon: Users,
+      icon: Activity,
       color: 'text-blue-600'
     },
     {
-      title: 'Delivered',
-      value: '12.5%',
-      change: '+19%',
+      title: 'Delivered Parcels',
+      value: '39,875',
+      change: '+15.2%',
       trend: 'up',
-      icon: TrendingUp,
+      icon: Users,
       color: 'text-purple-600'
     },
     {
       title: 'Failed Deliveries',
       value: '573',
-      change: '+201',
-      trend: 'up',
+      change: '-8%',
+      trend: 'down',
       icon: Activity,
-      color: 'text-orange-600'
+      color: 'text-red-600'
     }
   ];
 
@@ -125,10 +125,46 @@ export default function Dashboard() {
   ];
 
   const topProducts = [
-    { name: 'SDOD', sales: 101, revenue: '101', trend: '+12%' },
-    { name: 'Average Volume', sales: 'for the past week', revenue: '21456', trend: '+8%' },
-    { name: '1st Attempt', sales: 234, revenue: '18790', trend: '+25%' },
-    { name: '2nd Attempt', sales: 445, revenue: '8920', trend: '5%' }
+    { 
+      name: 'Same Day Delivery', 
+      subtitle: 'Current success rate', 
+      value: '94.2%', 
+      trend: '+5.2%',
+      trendUp: true,
+      icon: '🚀'
+    },
+    { 
+      name: 'Average Volume', 
+      subtitle: 'Last 7 days', 
+      value: '4000 parcels', 
+      trend: '-12 min',
+      trendUp: true,
+      icon: '📊'
+    },
+    { 
+      name: 'First Attempt Success', 
+      subtitle: 'Delivery completion', 
+      value: '87.5%', 
+      trend: '+3.1%',
+      trendUp: true,
+      icon: '🥇'
+    },
+    { 
+      name: 'Second Attempt Success', 
+      subtitle: 'Delivery completion', 
+      value: '87.5%', 
+      trend: '+3.1%',
+      trendUp: true,
+      icon: '🥈'
+    },
+    { 
+      name: 'Active Delivery Fleet', 
+      subtitle: '2W + 3W vehicles', 
+      value: '156 units', 
+      trend: '+8 units',
+      trendUp: true,
+      icon: '🚛'
+    }
   ];
 
   return (
@@ -179,29 +215,7 @@ export default function Dashboard() {
         {/* Dashboard Content */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 rounded-xl p-6 text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-2">Welcome back, John!</h2>
-              <p className="text-blue-100 mb-4">Here's what's happening with your business today.</p>
-              <div className="flex items-center space-x-4">
-                <button className="bg-white/20 backdrop-blur-sm border border-white/30 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 flex items-center space-x-2">
-                  <Plus className="w-4 h-4" />
-                  <span>Add New</span>
-                </button>
-                <button className="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2">
-                  <Download className="w-4 h-4" />
-                  <span>Export</span>
-                </button>
-              </div>
-            </div>
-            <div className="hidden md:block">
-              <div className="w-32 h-32 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <BarChart3 className="w-16 h-16 text-white/80" />
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -211,7 +225,11 @@ export default function Dashboard() {
                 <div className={`p-3 rounded-lg bg-gray-50 ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <span className={`text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                <span className={`text-sm font-medium ${
+                  stat.title === 'Failed Deliveries' 
+                    ? (stat.trend === 'down' ? 'text-green-600' : 'text-red-600')
+                    : (stat.trend === 'up' ? 'text-green-600' : 'text-red-600')
+                }`}>
                   {stat.change}
                 </span>
               </div>
@@ -273,61 +291,35 @@ export default function Dashboard() {
               </ResponsiveContainer>
             </div>
           </div>
-
-          {/* Quarterly Distribution */}
           <div className="bg-white rounded-xl border border-gray-200">
             <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Quarterly Distribution</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Key Logistics Metrics</h3>
+                <div className="text-xs text-gray-500">Real-time data</div>
+              </div>
             </div>
             <div className="p-6">
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={distributionData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="name" stroke="#6b7280" />
-                  <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'white', 
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="inbound" fill="#3b82f6" name="Inbound" />
-                  <Bar dataKey="outbound" fill="#8b5cf6" name="Outbound" />
-                  <Bar dataKey="delivered" fill="#10b981" name="Delivered" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional Analytics Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Top Products */}
-          <div className="bg-white rounded-xl border border-gray-200">
-            <div className="p-6 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Key Metrics</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {topProducts.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium text-gray-900">{product.name}</p>
-                      <p className="text-sm text-gray-500">{product.sales}</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {topProducts.map((metric, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">{metric.icon}</div>
+                      <div>
+                        <p className="font-medium text-gray-900">{metric.name}</p>
+                        <p className="text-sm text-gray-500">{metric.subtitle}</p>
+                      </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium text-gray-900">{product.revenue}</p>
-                      <p className="text-sm text-green-600">{product.trend}</p>
+                      <p className="font-bold text-gray-900">{metric.value}</p>
+                      <p className={`text-sm font-medium ${metric.trendUp ? 'text-green-600' : 'text-red-600'}`}>
+                        {metric.trend}
+                      </p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
           {/* Daily Trend Chart */}
           <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200">
             <div className="p-6 border-b border-gray-200">
