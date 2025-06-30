@@ -20,78 +20,32 @@ import {
   Eye,
   MoreHorizontal,
   Plus,
-  X
+  X,
+  ChevronRight
 } from 'lucide-react';
 
 export default function ReportsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
   const [selectedHub, setSelectedHub] = useState('all');
-  const [showAddReportModal, setShowAddReportModal] = useState(false);
-  const [reportForm, setReportForm] = useState({
-    hub: '',
-    inbound: '',
-    outbound: '',
-    backlogs: '',
-    delivered: '',
-    failed: '',
-    misroutes: '',
-    trips: {
-      '2w': '',
-      '3w': '',
-      '4w': ''
-    }
-  });
+  const [showHubSelectionModal, setShowHubSelectionModal] = useState(false);
+  const [selectedHubForReport, setSelectedHubForReport] = useState('');
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
   const handleAddReport = () => {
-    setShowAddReportModal(true);
+    setShowHubSelectionModal(true);
   };
 
   const handleCloseModal = () => {
-    setShowAddReportModal(false);
-    setReportForm({
-      hub: '',
-      inbound: '',
-      outbound: '',
-      backlogs: '',
-      delivered: '',
-      failed: '',
-      misroutes: '',
-      trips: {
-        '2w': '',
-        '3w': '',
-        '4w': ''
-      }
-    });
+    setShowHubSelectionModal(false);
+    setSelectedHubForReport('');
   };
 
-  const handleFormChange = (field: string, value: string) => {
-    if (field.startsWith('trips.')) {
-      const tripType = field.split('.')[1];
-      setReportForm(prev => ({
-        ...prev,
-        trips: {
-          ...prev.trips,
-          [tripType]: value
-        }
-      }));
-    } else {
-      setReportForm(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
-
-  const handleSubmitReport = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log('Submitting report:', reportForm);
-    alert('Report added successfully!');
-    handleCloseModal();
+  const handleHubSelection = (hubId: string, hubName: string) => {
+    window.location.href = `/reports/add?hub=${hubId}&hubName=${hubName}`;
   };
 
   // Sample reports data based on the Reports model
@@ -278,6 +232,13 @@ export default function ReportsPage() {
               <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={handleAddReport}
+                className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Report
+              </button>
               <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -338,13 +299,6 @@ export default function ReportsPage() {
                   <Download className="w-4 h-4" />
                   <span>Export</span>
                 </button>
-                <button 
-                  onClick={handleAddReport}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Report</span>
-                </button>
               </div>
             </div>
           </div>
@@ -384,13 +338,6 @@ export default function ReportsPage() {
                   <h3 className="text-lg font-semibold text-gray-900">Daily Reports</h3>
                   <p className="text-sm text-gray-500">Hub performance and delivery metrics</p>
                 </div>
-                <button
-                  onClick={handleAddReport}
-                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Report</span>
-                </button>
               </div>
             </div>
             <div className="overflow-x-auto">
@@ -476,196 +423,45 @@ export default function ReportsPage() {
           </div>
         </div>
 
-        {/* Add Report Modal */}
-        {showAddReportModal && (
+        {/* Hub Selection Modal */}
+        {showHubSelectionModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <form onSubmit={handleSubmitReport}>
-                {/* Modal Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                  <h3 className="text-xl font-semibold text-gray-900">Add New Report</h3>
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h3 className="text-xl font-semibold text-gray-900">Select Hub for Report</h3>
+                <button
+                  type="button"
+                  onClick={handleCloseModal}
+                  className="p-2 text-gray-400 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
 
-                {/* Modal Body */}
-                <div className="p-6 space-y-6">
-                  {/* Hub Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Hub <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={reportForm.hub}
-                      onChange={(e) => handleFormChange('hub', e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      required
+              {/* Modal Body */}
+              <div className="p-6">
+                <p className="text-gray-600 mb-4">Choose which hub you want to create a report for:</p>
+                <div className="space-y-2">
+                  {availableHubs.map((hub) => (
+                    <button
+                      key={hub.id}
+                      onClick={() => handleHubSelection(hub.id, hub.name)}
+                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors group"
                     >
-                      <option value="">Select a Hub</option>
-                      {availableHubs.map((hub) => (
-                        <option key={hub.id} value={hub.id}>
-                          {hub.name} ({hub.client})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Main Metrics */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Inbound <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.inbound}
-                        onChange={(e) => handleFormChange('inbound', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Outbound <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.outbound}
-                        onChange={(e) => handleFormChange('outbound', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Backlogs
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.backlogs}
-                        onChange={(e) => handleFormChange('backlogs', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Delivered <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.delivered}
-                        onChange={(e) => handleFormChange('delivered', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Failed <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.failed}
-                        onChange={(e) => handleFormChange('failed', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Misroutes
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={reportForm.misroutes}
-                        onChange={(e) => handleFormChange('misroutes', e.target.value)}
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Vehicle Trips */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Vehicle Trips
-                    </label>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">2-Wheeler</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={reportForm.trips['2w']}
-                          onChange={(e) => handleFormChange('trips.2w', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                          placeholder="0"
-                        />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium text-gray-900 group-hover:text-blue-700">{hub.name}</p>
+                          <p className="text-sm text-gray-500">Client: {hub.client}</p>
+                        </div>
+                        <div className="text-gray-400 group-hover:text-blue-500">
+                          <ChevronRight className="w-5 h-5" />
+                        </div>
                       </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">3-Wheeler</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={reportForm.trips['3w']}
-                          onChange={(e) => handleFormChange('trips.3w', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                          placeholder="0"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">4-Wheeler</label>
-                        <input
-                          type="number"
-                          min="0"
-                          value={reportForm.trips['4w']}
-                          onChange={(e) => handleFormChange('trips.4w', e.target.value)}
-                          className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                    </button>
+                  ))}
                 </div>
-
-                {/* Modal Footer */}
-                <div className="flex items-center justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
-                  <button
-                    type="button"
-                    onClick={handleCloseModal}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Add Report
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           </div>
         )}

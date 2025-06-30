@@ -32,6 +32,18 @@ const reportSchema = new mongoose.Schema({
     required: true
   },
   //2w or 3w
+  attendance: {
+    hub_lead: {
+      type: Number,
+      default: 0,
+      required: true
+    },
+    backroom: {
+      type: Number,
+      default: 0,
+      required: true
+    }
+  },
   trips: {
     "2w": {
       type: Number,
@@ -49,3 +61,5 @@ const reportSchema = new mongoose.Schema({
     default: Date.now
   }
 })
+
+export default mongoose.models.Report || mongoose.model('Report', reportSchema);

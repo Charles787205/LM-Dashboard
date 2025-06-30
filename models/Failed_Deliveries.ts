@@ -1,36 +1,46 @@
 import mongoose from 'mongoose';
 
-const AttendanceSchema = new mongoose.Schema({
+const FailedDeliverySchema = new mongoose.Schema({
   report: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Report',
     required: true
   },
-  hub_lead: {
+  canceled_bef_delivery: {
     type: Number,
     required: true,
     default: 0
   },
-  backroom: {
+  no_cash_available: {
     type: Number,
     required: true,
     default: 0
   },
-  drivers_2w: {
+  postpone: {
     type: Number,
     required: true,
     default: 0
   },
-  drivers_3w: {
+  not_at_home: {
     type: Number,
     required: true,
     default: 0
   },
-  drivers_4w: {
+  refuse: {
     type: Number,
     required: true,
     default: 0
-  }
+  },
+  unreachable: {
+    type: Number,
+    required: true,
+    default: 0
+  },
+  invalid_address: {
+    type: Number,
+    required: true,
+    default: 0
+  },
 });
 
-export default mongoose.models.Attendance || mongoose.model('Attendance', AttendanceSchema);
+export default mongoose.models.FailedDelivery || mongoose.model('FailedDelivery', FailedDeliverySchema);

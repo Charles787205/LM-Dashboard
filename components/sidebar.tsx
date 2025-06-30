@@ -13,10 +13,15 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Search,
   Plus,
   HelpCircle,
-  LogOut
+  LogOut,
+  Building2,
+  MapPin,
+  X
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -26,6 +31,22 @@ interface SidebarProps {
 
 export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const [hubsExpanded, setHubsExpanded] = useState(true);
+  const [showAddHubModal, setShowAddHubModal] = useState(false);
+  const [hubForm, setHubForm] = useState({
+    name: '',
+    client: '',
+    hub_cost_per_parcel: {
+      '2W': '',
+      '3W': '',
+      '4W': ''
+    },
+    hub_profit_per_parcel: {
+      '2W': '',
+      '3W': '',
+      '4W': ''
+    }
+  });
 
   const menuItems = [
     {
@@ -51,7 +72,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
     },
     {
       id: 'reports',
-      label: 'Reports',
+      label: 'All Reports',
       icon: FileText,
       href: '/reports',
       badge: null
@@ -63,6 +84,14 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       href: '/calendar',
       badge: null
     }
+  ];
+
+  const hubs = [
+    { id: 'downtown', name: 'Downtown Hub', client: 'LEX', color: 'bg-blue-500' },
+    { id: 'north', name: 'North Hub', client: '2GO', color: 'bg-green-500' },
+    { id: 'south', name: 'South Hub', client: 'SPX', color: 'bg-purple-500' },
+    { id: 'east', name: 'East Hub', client: 'LEX', color: 'bg-orange-500' },
+    { id: 'west', name: 'West Hub', client: '2GO', color: 'bg-red-500' }
   ];
 
   const bottomItems = [
@@ -84,6 +113,53 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
 
   const handleItemClick = (itemId: string) => {
     // Navigation is handled by Link components
+  };
+
+  const handleAddHub = () => {
+    setShowAddHubModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowAddHubModal(false);
+    setHubForm({
+      name: '',
+      client: '',
+      hub_cost_per_parcel: {
+        '2W': '',
+        '3W': '',
+        '4W': ''
+      },
+      hub_profit_per_parcel: {
+        '2W': '',
+        '3W': '',
+        '4W': ''
+      }
+    });
+  };
+
+  const handleFormChange = (field: string, value: string) => {
+    if (field.startsWith('hub_cost_per_parcel.') || field.startsWith('hub_profit_per_parcel.')) {
+      const [section, vehicleType] = field.split('.');
+      setHubForm(prev => ({
+        ...prev,
+        [section]: {
+          ...((prev as any)[section]),
+          [vehicleType]: value
+        }
+      }));
+    } else {
+      setHubForm(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
+  };
+
+  const handleSubmitHub = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Submitting hub:', hubForm);
+    alert('Hub added successfully!');
+    handleCloseModal();
   };
 
   return (
@@ -171,10 +247,68 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
           ))}
         </div>
 
+        {/* Hubs Section */}
+        {!isCollapsed && (
+          <div className="p-4 space-y-1">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                Hubs
+              </h3>
+              <div className="flex items-center space-x-1">
+                <button
+                  onClick={handleAddHub}
+                  className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-blue-600 transition-colors"
+                  title="Add Hub"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => setHubsExpanded(!hubsExpanded)}
+                  className="p-1 hover:bg-gray-100 rounded"
+                >
+                  {hubsExpanded ? (
+                    <ChevronUp className="w-3 h-3 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-3 h-3 text-gray-400" />
+                  )}
+                </button>
+              </div>
+            </div>
+            
+            {hubsExpanded && (
+              <div className="space-y-1">
+                {hubs.map((hub) => (
+                  <Link
+                    key={hub.id}
+                    href={`/hubs/${hub.id}`}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                      pathname.startsWith(`/hubs/${hub.id}`)
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-3 h-3 rounded-full ${hub.color}`}></div>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-sm">{hub.name}</span>
+                        <span className="text-xs text-gray-500">{hub.client}</span>
+                      </div>
+                    </div>
+                    <MapPin className={`w-4 h-4 ${pathname.startsWith(`/hubs/${hub.id}`) ? 'text-blue-600' : 'text-gray-400'}`} />
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Quick Actions */}
         {!isCollapsed && (
           <div className="p-4">
-            <button className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm">
+            <button 
+              onClick={handleAddHub}
+              className="w-full flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-sm"
+            >
               <Plus className="w-4 h-4 mr-2" />
               <span className="font-medium">New Project</span>
             </button>
@@ -221,6 +355,148 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
           )}
         </div>
       </div>
+
+      {/* Add Hub Modal */}
+      {showAddHubModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-md">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Add New Hub</h2>
+              <button
+                onClick={handleCloseModal}
+                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4">
+              <form onSubmit={handleSubmitHub} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Hub Name
+                  </label>
+                  <input
+                    type="text"
+                    value={hubForm.name}
+                    onChange={(e) => handleFormChange('name', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Client
+                  </label>
+                  <select
+                    value={hubForm.client}
+                    onChange={(e) => handleFormChange('client', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    required
+                  >
+                    <option value="">Select Client</option>
+                    <option value="LEX">LEX</option>
+                    <option value="2GO">2GO</option>
+                    <option value="SPX">SPX</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      2W Cost
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_cost_per_parcel['2W']}
+                      onChange={(e) => handleFormChange('hub_cost_per_parcel.2W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      3W Cost
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_cost_per_parcel['3W']}
+                      onChange={(e) => handleFormChange('hub_cost_per_parcel.3W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      4W Cost
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_cost_per_parcel['4W']}
+                      onChange={(e) => handleFormChange('hub_cost_per_parcel.4W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      2W Profit
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_profit_per_parcel['2W']}
+                      onChange={(e) => handleFormChange('hub_profit_per_parcel.2W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      3W Profit
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_profit_per_parcel['3W']}
+                      onChange={(e) => handleFormChange('hub_profit_per_parcel.3W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      4W Profit
+                    </label>
+                    <input
+                      type="number"
+                      value={hubForm.hub_profit_per_parcel['4W']}
+                      onChange={(e) => handleFormChange('hub_profit_per_parcel.4W', e.target.value)}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2">
+                  <button
+                    onClick={handleCloseModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200"
+                  >
+                    Add Hub
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
