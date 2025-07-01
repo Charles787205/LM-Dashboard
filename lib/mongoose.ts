@@ -32,11 +32,25 @@ export async function connectToDatabase(): Promise<Mongoose> {
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI as string, {
+    const opts = {
       bufferCommands: false,
-    });
+      serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+      socketTimeoutMS: 45000, // 45 seconds socket timeout
+      maxPoolSize: 10, // Maintain up to 10 socket connections
+      minPoolSize: 5, // Maintain a minimum of 5 socket connections
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts);
   }
 
-  cached.conn = await cached.promise;
-  return cached.conn;
+  try {
+    cached.conn = await cached.promise;
+    console.log('✅ MongoDB connected successfully');
+    return cached.conn;
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    cached.promise = null; // Reset promise on failure
+    throw error;
+  }
 }

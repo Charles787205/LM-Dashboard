@@ -1,8 +1,11 @@
 import mongoose from 'mongoose';
-import Hub from './Hubs'
 
 const reportSchema = new mongoose.Schema({
-  hub: Hub,
+  hub: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hub',
+    required: true
+  },
   inbound: {
     type: Number,
     default: 0,

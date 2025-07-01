@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -24,6 +24,12 @@ import {
   X
 } from 'lucide-react';
 
+interface Hub {
+  _id: string;
+  name: string;
+  client: 'LEX' | '2GO' | 'SPX';
+}
+
 interface SidebarProps {
   isCollapsed?: boolean;
   onToggle?: () => void;
@@ -33,6 +39,8 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
   const pathname = usePathname();
   const [hubsExpanded, setHubsExpanded] = useState(true);
   const [showAddHubModal, setShowAddHubModal] = useState(false);
+  const [hubs, setHubs] = useState<Hub[]>([]);
+  const [loading, setLoading] = useState(true);
   const [hubForm, setHubForm] = useState({
     name: '',
     client: '',
@@ -47,6 +55,37 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       '4W': ''
     }
   });
+
+  // Fetch hubs from database
+  useEffect(() => {
+    const fetchHubs = async () => {
+      try {
+        const response = await fetch('/api/hubs');
+        const result = await response.json();
+        if (result.success) {
+          setHubs(result.data);
+        } else {
+          console.error('Failed to fetch hubs:', result.error);
+        }
+      } catch (error) {
+        console.error('Error fetching hubs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHubs();
+  }, []);
+
+  // Function to get color based on client
+  const getClientColor = (client: string) => {
+    switch (client) {
+      case 'LEX': return 'bg-blue-500';
+      case '2GO': return 'bg-green-500';
+      case 'SPX': return 'bg-purple-500';
+      default: return 'bg-gray-500';
+    }
+  };
 
   const menuItems = [
     {
@@ -84,14 +123,6 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       href: '/calendar',
       badge: null
     }
-  ];
-
-  const hubs = [
-    { id: 'downtown', name: 'Downtown Hub', client: 'LEX', color: 'bg-blue-500' },
-    { id: 'north', name: 'North Hub', client: '2GO', color: 'bg-green-500' },
-    { id: 'south', name: 'South Hub', client: 'SPX', color: 'bg-purple-500' },
-    { id: 'east', name: 'East Hub', client: 'LEX', color: 'bg-orange-500' },
-    { id: 'west', name: 'West Hub', client: '2GO', color: 'bg-red-500' }
   ];
 
   const bottomItems = [
@@ -155,11 +186,37 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
     }
   };
 
-  const handleSubmitHub = (e: React.FormEvent) => {
+  const handleSubmitHub = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Submitting hub:', hubForm);
-    alert('Hub added successfully!');
-    handleCloseModal();
+    
+    try {
+      const response = await fetch('/api/hubs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(hubForm),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh the hubs list
+        const hubsResponse = await fetch('/api/hubs');
+        const hubsResult = await hubsResponse.json();
+        if (hubsResult.success) {
+          setHubs(hubsResult.data);
+        }
+        
+        alert('Hub added successfully!');
+        handleCloseModal();
+      } else {
+        alert('Error: ' + result.error);
+      }
+    } catch (error) {
+      console.error('Error creating hub:', error);
+      alert('Failed to create hub. Please try again.');
+    }
   };
 
   return (
@@ -277,26 +334,32 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
             
             {hubsExpanded && (
               <div className="space-y-1">
-                {hubs.map((hub) => (
-                  <Link
-                    key={hub.id}
-                    href={`/hubs/${hub.id}`}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
-                      pathname.startsWith(`/hubs/${hub.id}`)
-                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`w-3 h-3 rounded-full ${hub.color}`}></div>
-                      <div className="flex flex-col">
-                        <span className="font-medium text-sm">{hub.name}</span>
-                        <span className="text-xs text-gray-500">{hub.client}</span>
+                {loading ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">Loading hubs...</div>
+                ) : hubs.length === 0 ? (
+                  <div className="px-3 py-2 text-sm text-gray-500">No hubs found</div>
+                ) : (
+                  hubs.map((hub) => (
+                    <Link
+                      key={hub._id}
+                      href={`/hubs/${hub._id}`}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
+                        pathname.startsWith(`/hubs/${hub._id}`)
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className={`w-3 h-3 rounded-full ${getClientColor(hub.client)}`}></div>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{hub.name}</span>
+                          <span className="text-xs text-gray-500">{hub.client}</span>
+                        </div>
                       </div>
-                    </div>
-                    <MapPin className={`w-4 h-4 ${pathname.startsWith(`/hubs/${hub.id}`) ? 'text-blue-600' : 'text-gray-400'}`} />
-                  </Link>
-                ))}
+                      <MapPin className={`w-4 h-4 ${pathname.startsWith(`/hubs/${hub._id}`) ? 'text-blue-600' : 'text-gray-400'}`} />
+                    </Link>
+                  ))
+                )}
               </div>
             )}
           </div>
