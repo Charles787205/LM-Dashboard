@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+import { ChevronDown, LogOut, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
 
 interface NavbarProps {
   title?: string;
@@ -14,6 +17,23 @@ interface NavbarProps {
 
 export default function Navbar({ title, backLink, actions }: NavbarProps) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const navItems = [
     { name: 'Dashboard', href: '/' },
@@ -22,6 +42,10 @@ export default function Navbar({ title, backLink, actions }: NavbarProps) {
     { name: 'Analytics', href: '/analytics' },
     { name: 'Users', href: '/users' },
   ];
+
+  const handleSignOut = () => {
+    signOut({ callbackUrl: '/login' });
+  };
 
   return (
     <div className="bg-white shadow-sm border-b sticky top-0 z-10">
@@ -51,9 +75,53 @@ export default function Navbar({ title, backLink, actions }: NavbarProps) {
             </div>
           </div>
           
-          {/* Right side - can be customized per page */}
+          {/* Right side - User menu */}
           <div className="flex items-center space-x-4">
             {actions}
+            
+            {status === 'loading' ? (
+              <div className="animate-pulse bg-gray-200 h-8 w-8 rounded-full"></div>
+            ) : session ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none"
+                >
+                  {session.user?.image ? (
+                    <img
+                      src={session.user.image}
+                      alt={session.user.name || 'User'}
+                      className="h-8 w-8 rounded-full"
+                    />
+                  ) : (
+                    <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center">
+                      <User className="h-4 w-4 text-white" />
+                    </div>
+                  )}
+                  <span className="hidden sm:block text-sm font-medium">
+                    {session.user?.name || session.user?.email}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+
+                {/* Dropdown menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                      <div className="font-medium">{session.user?.name}</div>
+                      <div className="text-gray-500">{session.user?.email}</div>
+                    </div>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
