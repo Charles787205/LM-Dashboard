@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useHubs } from '@/hooks/useHubs';
 import {
   Home,
   BarChart3,
@@ -39,8 +40,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
   const pathname = usePathname();
   const [hubsExpanded, setHubsExpanded] = useState(true);
   const [showAddHubModal, setShowAddHubModal] = useState(false);
-  const [hubs, setHubs] = useState<Hub[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { hubs, loading, refreshHubs } = useHubs();
   const [hubForm, setHubForm] = useState({
     name: '',
     client: '',
@@ -55,27 +55,6 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       '4W': ''
     }
   });
-
-  // Fetch hubs from database
-  useEffect(() => {
-    const fetchHubs = async () => {
-      try {
-        const response = await fetch('/api/hubs');
-        const result = await response.json();
-        if (result.success) {
-          setHubs(result.data);
-        } else {
-          console.error('Failed to fetch hubs:', result.error);
-        }
-      } catch (error) {
-        console.error('Error fetching hubs:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHubs();
-  }, []);
 
   // Function to get color based on client
   const getClientColor = (client: string) => {
@@ -202,11 +181,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
 
       if (result.success) {
         // Refresh the hubs list
-        const hubsResponse = await fetch('/api/hubs');
-        const hubsResult = await hubsResponse.json();
-        if (hubsResult.success) {
-          setHubs(hubsResult.data);
-        }
+        await refreshHubs();
         
         alert('Hub added successfully!');
         handleCloseModal();

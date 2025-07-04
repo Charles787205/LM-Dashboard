@@ -7,7 +7,13 @@ export async function GET() {
   try {
     await connectToDatabase();
     const hubs = await Hub.find({}).sort({ name: 1 });
-    return NextResponse.json({ success: true, data: hubs });
+    
+    const response = NextResponse.json({ success: true, data: hubs });
+    
+    // Add cache headers
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+    
+    return response;
   } catch (error) {
     console.error('Error fetching hubs:', error);
     return NextResponse.json(
