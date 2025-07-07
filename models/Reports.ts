@@ -50,13 +50,35 @@ const reportSchema = new mongoose.Schema({
   trips: {
     "2w": {
       type: Number,
-      
+      default: 0,
+      required: true
     },
     "3w": {
-      type: Number
+      type: Number,
+      default: 0,
+      required: true
     },
     "4w": {
-      type: Number
+      type: Number,
+      default: 0,
+      required: true
+    }
+  },
+  successful_deliveries: {
+    "2w": {
+      type: Number,
+      default: 0,
+      required: true
+    },
+    "3w": {
+      type: Number,
+      default: 0,
+      required: true
+    },
+    "4w": {
+      type: Number,
+      default: 0,
+      required: true
     }
   },
   date: {

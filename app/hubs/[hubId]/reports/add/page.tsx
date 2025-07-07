@@ -12,7 +12,8 @@ import {
   Calendar, 
   Package, 
   Truck, 
-  Users 
+  Users,
+  CheckCircle
 } from 'lucide-react';
 
 interface Hub {
@@ -69,6 +70,11 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
       '3w': '',
       '4w': ''
     },
+    successful_deliveries: {
+      '2w': '',
+      '3w': '',
+      '4w': ''
+    },
     attendance: {
       hub_lead: '',
       backroom: ''
@@ -121,6 +127,11 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
           '2w': parseInt(reportData.trips['2w']) || 0,
           '3w': parseInt(reportData.trips['3w']) || 0,
           '4w': parseInt(reportData.trips['4w']) || 0
+        },
+        successful_deliveries: {
+          '2w': parseInt(reportData.successful_deliveries['2w']) || 0,
+          '3w': parseInt(reportData.successful_deliveries['3w']) || 0,
+          '4w': parseInt(reportData.successful_deliveries['4w']) || 0
         },
         attendance: {
           hub_lead: parseInt(reportData.attendance.hub_lead) || 0,
@@ -392,6 +403,52 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
                     type="number"
                     value={reportData.trips['4w']}
                     onChange={(e) => handleInputChange('trips', '4w', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Successful Deliveries */}
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center mb-6">
+                <CheckCircle className="w-5 h-5 text-green-600 mr-2" />
+                <h2 className="text-lg font-semibold text-gray-900">Successful Deliveries</h2>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    2-Wheeler Successful Deliveries
+                  </label>
+                  <input
+                    type="number"
+                    value={reportData.successful_deliveries['2w']}
+                    onChange={(e) => handleInputChange('successful_deliveries', '2w', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    3-Wheeler Successful Deliveries
+                  </label>
+                  <input
+                    type="number"
+                    value={reportData.successful_deliveries['3w']}
+                    onChange={(e) => handleInputChange('successful_deliveries', '3w', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    4-Wheeler Successful Deliveries
+                  </label>
+                  <input
+                    type="number"
+                    value={reportData.successful_deliveries['4w']}
+                    onChange={(e) => handleInputChange('successful_deliveries', '4w', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                     required
                   />

@@ -39,6 +39,11 @@ interface Report {
     '3w': number;
     '4w': number;
   };
+  successful_deliveries?: {
+    '2w': number;
+    '3w': number;
+    '4w': number;
+  };
 }
 
 export default function HubDetailPage({ params }: { params: Promise<{ hubId: string }> }) {
@@ -99,6 +104,31 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Helper functions for calculated metrics
+  const calculatePOF = (report: Report) => {
+    return report.inbound + report.backlogs - report.outbound;
+  };
+
+  const calculateSuccessRate = (report: Report) => {
+    return report.outbound > 0 ? ((report.delivered / report.outbound) * 100) : 0;
+  };
+
+  const calculateFailedRate = (report: Report) => {
+    return report.outbound > 0 ? ((report.failed / report.outbound) * 100) : 0;
+  };
+
+  const calculateSDOD = (report: Report) => {
+    const totalAvailable = report.inbound + report.backlogs;
+    return totalAvailable > 0 ? ((report.outbound / totalAvailable) * 100) : 0;
+  };
+
+  const getTotalSuccessfulDeliveries = (report: Report) => {
+    if (!report.successful_deliveries) return 0;
+    return (report.successful_deliveries['2w'] || 0) + 
+           (report.successful_deliveries['3w'] || 0) + 
+           (report.successful_deliveries['4w'] || 0);
   };
 
   if (loading) {
@@ -166,28 +196,40 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
         <div className="flex-1 overflow-auto p-6">
           {/* Key Metrics */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            {/* Average Same Day Deliveries */}
+            {/* Average Success Rate */}
             <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg Same Day Deliveries</h3>
-              <div className="text-3xl font-bold text-blue-600">
-                {reports.length > 0 
-                  ? Math.round(reports.reduce((acc, report) => acc + report.delivered, 0) / reports.length)
-                  : 0
-                }
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Per day</p>
-            </div>
-            
-            {/* Average Inbound */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg Inbound</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg Success Rate</h3>
               <div className="text-3xl font-bold text-green-600">
                 {reports.length > 0 
-                  ? Math.round(reports.reduce((acc, report) => acc + report.inbound, 0) / reports.length)
+                  ? (reports.reduce((acc, report) => acc + calculateSuccessRate(report), 0) / reports.length).toFixed(1)
+                  : 0
+                }%
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Delivered/Outbound</p>
+            </div>
+            
+            {/* Average SDOD */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg SDOD</h3>
+              <div className="text-3xl font-bold text-blue-600">
+                {reports.length > 0 
+                  ? (reports.reduce((acc, report) => acc + calculateSDOD(report), 0) / reports.length).toFixed(1)
+                  : 0
+                }%
+              </div>
+              <p className="text-sm text-gray-600 mt-1">Same Day Out Delivery</p>
+            </div>
+            
+            {/* Average POF */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg POF</h3>
+              <div className="text-3xl font-bold text-orange-600">
+                {reports.length > 0 
+                  ? Math.round(reports.reduce((acc, report) => acc + calculatePOF(report), 0) / reports.length)
                   : 0
                 }
               </div>
-              <p className="text-sm text-gray-600 mt-1">Per day</p>
+              <p className="text-sm text-gray-600 mt-1">Parcel on Floor</p>
             </div>
             
             {/* Total Reports */}
@@ -195,21 +237,6 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Total Reports</h3>
               <div className="text-3xl font-bold text-purple-600">{reports.length}</div>
               <p className="text-sm text-gray-600 mt-1">Reports filed</p>
-            </div>
-            
-            {/* Efficiency Rate */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Avg Efficiency</h3>
-              <div className="text-3xl font-bold text-orange-600">
-                {reports.length > 0 
-                  ? (reports.reduce((acc, report) => {
-                      const total = report.delivered + report.failed;
-                      return acc + (total > 0 ? (report.delivered / total) * 100 : 0);
-                    }, 0) / reports.length).toFixed(1)
-                  : 0
-                }%
-              </div>
-              <p className="text-sm text-gray-600 mt-1">Success rate</p>
             </div>
           </div>
 
@@ -300,13 +327,22 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                           Outbound
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          POF
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Delivered
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Successful
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Failed
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Backlogs
+                          Success Rate
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          SDOD
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Actions
@@ -330,9 +366,26 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              calculatePOF(report) > 0 ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {calculatePOF(report)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                               {report.delivered}
                             </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <div className="text-xs">
+                              <div>2W: {report.successful_deliveries?.['2w'] || 0}</div>
+                              <div>3W: {report.successful_deliveries?.['3w'] || 0}</div>
+                              <div>4W: {report.successful_deliveries?.['4w'] || 0}</div>
+                              <div className="font-semibold text-green-600">
+                                Total: {getTotalSuccessfulDeliveries(report)}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
@@ -340,8 +393,19 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                              {report.backlogs}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              calculateSuccessRate(report) >= 80 ? 'bg-green-100 text-green-800' : 
+                              calculateSuccessRate(report) >= 60 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {calculateSuccessRate(report).toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              calculateSDOD(report) >= 90 ? 'bg-green-100 text-green-800' : 
+                              calculateSDOD(report) >= 70 ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {calculateSDOD(report).toFixed(1)}%
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

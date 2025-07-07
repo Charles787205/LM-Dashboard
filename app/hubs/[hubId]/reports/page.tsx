@@ -42,6 +42,11 @@ interface Report {
     '3w': number;
     '4w': number;
   };
+  successful_deliveries?: {
+    '2w': number;
+    '3w': number;
+    '4w': number;
+  };
 }
 
 export default function HubReportsPage({ params }: { params: Promise<{ hubId: string }> }) {
@@ -116,6 +121,27 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
     return total > 0 ? ((delivered / total) * 100).toFixed(1) + '%' : '0%';
   };
 
+  // Calculate POF (Parcel on Floor)
+  const calculatePOF = (inbound: number, backlogs: number, outbound: number) => {
+    return inbound + backlogs - outbound;
+  };
+
+  // Calculate Success Rate
+  const calculateSuccessRate = (delivered: number, outbound: number) => {
+    return outbound > 0 ? ((delivered / outbound) * 100).toFixed(1) + '%' : '0%';
+  };
+
+  // Calculate Failed Rate
+  const calculateFailedRate = (failed: number, outbound: number) => {
+    return outbound > 0 ? ((failed / outbound) * 100).toFixed(1) + '%' : '0%';
+  };
+
+  // Calculate SDOD (Same Day Out Delivery)
+  const calculateSDOD = (outbound: number, inbound: number, backlogs: number) => {
+    const total = inbound + backlogs;
+    return total > 0 ? ((outbound / total) * 100).toFixed(1) + '%' : '0%';
+  };
+
   const handleAddReport = () => {
     router.push(`/hubs/${hubId}/reports/add`);
   };
@@ -132,32 +158,43 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
       bgColor: 'bg-blue-100'
     },
     {
-      title: 'Avg. Deliveries',
-      value: Math.round(reports.reduce((acc, report) => acc + report.delivered, 0) / reports.length).toString(),
-      change: 'Average per day',
+      title: 'Avg. Success Rate',
+      value: reports.length > 0 
+        ? (reports.reduce((acc, report) => {
+            const successRate = report.outbound > 0 ? (report.delivered / report.outbound) * 100 : 0;
+            return acc + successRate;
+          }, 0) / reports.length).toFixed(1) + '%'
+        : '0%',
+      change: 'Delivered vs Outbound',
       trend: 'up',
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
-      title: 'Avg. Success Rate',
+      title: 'Avg. SDOD',
       value: reports.length > 0 
         ? (reports.reduce((acc, report) => {
-            const total = report.delivered + report.failed;
-            return acc + (total > 0 ? (report.delivered / total) * 100 : 0);
+            const total = report.inbound + report.backlogs;
+            const sdod = total > 0 ? (report.outbound / total) * 100 : 0;
+            return acc + sdod;
           }, 0) / reports.length).toFixed(1) + '%'
         : '0%',
-      change: 'Performance metric',
+      change: 'Same Day Out Delivery',
       trend: 'up',
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
     },
     {
-      title: 'Total Failed',
-      value: reports.reduce((acc, report) => acc + report.failed, 0).toString(),
-      change: 'Requires attention',
+      title: 'Avg. POF',
+      value: reports.length > 0 
+        ? Math.round(reports.reduce((acc, report) => {
+            const pof = report.inbound + report.backlogs - report.outbound;
+            return acc + pof;
+          }, 0) / reports.length).toString()
+        : '0',
+      change: 'Parcel on Floor',
       trend: 'down',
       icon: AlertCircle,
       color: 'text-red-600',
@@ -320,66 +357,125 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Inbound</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Outbound</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Backlogs</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        <div className="flex items-center">
+                          POF
+                          <span className="ml-1 text-xs text-gray-500" title="Parcel on Floor: Inbound + Backlogs - Outbound">ⓘ</span>
+                        </div>
+                      </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Delivered</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Failed</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Misroutes</th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        <div className="flex items-center">
+                          Success Rate
+                          <span className="ml-1 text-xs text-gray-500" title="Delivered / Outbound * 100%">ⓘ</span>
+                        </div>
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        <div className="flex items-center">
+                          Failed Rate
+                          <span className="ml-1 text-xs text-gray-500" title="Failed / Outbound * 100%">ⓘ</span>
+                        </div>
+                      </th>
+                      <th className="text-left py-3 px-4 font-medium text-gray-900">
+                        <div className="flex items-center">
+                          SDOD
+                          <span className="ml-1 text-xs text-gray-500" title="Same Day Out Delivery: Outbound / (Inbound + Backlogs) * 100%">ⓘ</span>
+                        </div>
+                      </th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Trips</th>
-                      <th className="text-left py-3 px-4 font-medium text-gray-900">Efficiency</th>
                       <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {reports.map((report) => (
-                      <tr key={report._id} className="hover:bg-gray-50">
-                        <td className="py-3 px-4 text-sm text-gray-900">{formatDate(report.date)}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.inbound.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.outbound.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.backlogs}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.delivered.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.failed}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">{report.misroutes}</td>
-                        <td className="py-3 px-4 text-sm text-gray-900">
-                          <div className="flex space-x-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                              2W: {report.trips['2w']}
+                    {reports.map((report) => {
+                      const pof = calculatePOF(report.inbound, report.backlogs, report.outbound);
+                      const successRate = calculateSuccessRate(report.delivered, report.outbound);
+                      const failedRate = calculateFailedRate(report.failed, report.outbound);
+                      const sdod = calculateSDOD(report.outbound, report.inbound, report.backlogs);
+                      
+                      return (
+                        <tr key={report._id} className="hover:bg-gray-50">
+                          <td className="py-3 px-4 text-sm text-gray-900">{formatDate(report.date)}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">{report.inbound.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">{report.outbound.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">{report.backlogs}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              pof <= 0 
+                                ? 'bg-green-100 text-green-800'
+                                : pof <= 50
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {pof}
                             </span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                              3W: {report.trips['3w']}
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900">{report.delivered.toLocaleString()}</td>
+                          <td className="py-3 px-4 text-sm text-gray-900">{report.failed}</td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              parseFloat(successRate) >= 95 
+                                ? 'bg-green-100 text-green-800'
+                                : parseFloat(successRate) >= 90
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {successRate}
                             </span>
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
-                              4W: {report.trips['4w']}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              parseFloat(failedRate) <= 5 
+                                ? 'bg-green-100 text-green-800'
+                                : parseFloat(failedRate) <= 10
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {failedRate}
                             </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          {(() => {
-                            const efficiency = calculateEfficiency(report.delivered, report.failed);
-                            const efficiencyNum = parseFloat(efficiency);
-                            return (
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                efficiencyNum >= 95 
-                                  ? 'bg-green-100 text-green-800'
-                                  : efficiencyNum >= 90
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : 'bg-red-100 text-red-800'
-                              }`}>
-                                {efficiency}
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              parseFloat(sdod) >= 90 
+                                ? 'bg-green-100 text-green-800'
+                                : parseFloat(sdod) >= 80
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {sdod}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-gray-900">
+                            <div className="flex space-x-1">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                2W: {report.trips['2w']}
                               </span>
-                            );
-                          })()}
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center space-x-2">
-                            <button className="p-1 text-gray-400 hover:text-blue-600">
-                              <Eye className="w-4 h-4" />
-                            </button>
-                            <button className="p-1 text-gray-400 hover:text-gray-600">
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                3W: {report.trips['3w']}
+                              </span>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                4W: {report.trips['4w']}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                                onClick={() => router.push(`/reports/${report._id}`)}
+                                title="View Report Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button className="p-1 text-gray-400 hover:text-gray-600">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

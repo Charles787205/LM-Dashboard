@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components';
+import { useReports } from '@/hooks/useReports';
+import { useHubs } from '@/hooks/useHubs';
 import { 
   Calendar, 
   Download, 
@@ -21,15 +24,21 @@ import {
   MoreHorizontal,
   Plus,
   X,
-  ChevronRight
+  ChevronRight,
+  RefreshCw
 } from 'lucide-react';
 
 export default function ReportsPage() {
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
   const [selectedHub, setSelectedHub] = useState('all');
   const [showHubSelectionModal, setShowHubSelectionModal] = useState(false);
   const [selectedHubForReport, setSelectedHubForReport] = useState('');
+
+  // Get reports and hubs from database
+  const { reports, loading: reportsLoading, error: reportsError, refreshReports } = useReports();
+  const { hubs, loading: hubsLoading } = useHubs();
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
@@ -48,168 +57,139 @@ export default function ReportsPage() {
     window.location.href = `/reports/add?hub=${hubId}&hubName=${hubName}`;
   };
 
-  // Sample reports data based on the Reports model
-  const reportsData = [
-    {
-      id: 1,
-      hub: 'Downtown Hub',
-      client: 'LEX',
-      inbound: 324,
-      outbound: 298,
-      backlogs: 26,
-      delivered: 275,
-      failed: 12,
-      misroutes: 8,
-      trips: { '2w': 189, '3w': 86, '4w': 12 },
-      date: '2025-01-07',
-      efficiency: '92.3%'
-    },
-    {
-      id: 2,
-      hub: 'North Hub',
-      client: '2GO',
-      inbound: 256,
-      outbound: 241,
-      backlogs: 15,
-      delivered: 228,
-      failed: 8,
-      misroutes: 5,
-      trips: { '2w': 156, '3w': 72, '4w': 13 },
-      date: '2025-01-07',
-      efficiency: '94.6%'
-    },
-    {
-      id: 3,
-      hub: 'South Hub',
-      client: 'SPX',
-      inbound: 398,
-      outbound: 372,
-      backlogs: 26,
-      delivered: 349,
-      failed: 15,
-      misroutes: 8,
-      trips: { '2w': 245, '3w': 104, '4w': 23 },
-      date: '2025-01-07',
-      efficiency: '93.8%'
-    },
-    {
-      id: 4,
-      hub: 'East Hub',
-      client: 'LEX',
-      inbound: 189,
-      outbound: 176,
-      backlogs: 13,
-      delivered: 164,
-      failed: 9,
-      misroutes: 3,
-      trips: { '2w': 112, '3w': 52, '4w': 12 },
-      date: '2025-01-07',
-      efficiency: '93.2%'
-    },
-    {
-      id: 5,
-      hub: 'West Hub',
-      client: '2GO',
-      inbound: 287,
-      outbound: 269,
-      backlogs: 18,
-      delivered: 251,
-      failed: 11,
-      misroutes: 7,
-      trips: { '2w': 178, '3w': 73, '4w': 18 },
-      date: '2025-01-07',
-      efficiency: '93.3%'
-    },
-    {
-      id: 6,
-      hub: 'Downtown Hub',
-      client: 'LEX',
-      inbound: 312,
-      outbound: 289,
-      backlogs: 23,
-      delivered: 267,
-      failed: 14,
-      misroutes: 8,
-      trips: { '2w': 184, '3w': 83, '4w': 14 },
-      date: '2025-01-06',
-      efficiency: '92.4%'
-    },
-    {
-      id: 7,
-      hub: 'North Hub',
-      client: '2GO',
-      inbound: 234,
-      outbound: 218,
-      backlogs: 16,
-      delivered: 203,
-      failed: 9,
-      misroutes: 6,
-      trips: { '2w': 142, '3w': 61, '4w': 15 },
-      date: '2025-01-06',
-      efficiency: '93.1%'
-    },
-    {
-      id: 8,
-      hub: 'South Hub',
-      client: 'SPX',
-      inbound: 421,
-      outbound: 398,
-      backlogs: 23,
-      delivered: 376,
-      failed: 13,
-      misroutes: 9,
-      trips: { '2w': 268, '3w': 108, '4w': 22 },
-      date: '2025-01-06',
-      efficiency: '94.5%'
+  // Filter reports based on selected hub and period
+  const filteredReports = reports.filter(report => {
+    if (selectedHub !== 'all' && report.hub._id !== selectedHub) {
+      return false;
     }
-  ];
+    
+    const reportDate = new Date(report.date);
+    const now = new Date();
+    
+    switch (selectedPeriod) {
+      case 'today':
+        return reportDate.toDateString() === now.toDateString();
+      case 'last-7-days':
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        return reportDate >= weekAgo;
+      case 'last-30-days':
+        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        return reportDate >= monthAgo;
+      default:
+        return true;
+    }
+  });
 
+  // Calculate summary statistics
+  const calculateSummary = () => {
+    if (filteredReports.length === 0) {
+      return {
+        totalInbound: 0,
+        totalOutbound: 0,
+        totalDelivered: 0,
+        totalSuccessful: 0,
+        totalFailed: 0,
+        totalBacklogs: 0,
+        averagePOF: 0,
+        averageSuccessRate: 0,
+        averageFailedRate: 0,
+        averageSDOD: 0,
+        averageEfficiency: 0
+      };
+    }
+
+    const totals = filteredReports.reduce((acc, report) => {
+      acc.totalInbound += report.inbound;
+      acc.totalOutbound += report.outbound;
+      acc.totalDelivered += report.delivered;
+      acc.totalFailed += report.failed;
+      acc.totalBacklogs += report.backlogs;
+      
+      // Calculate total successful deliveries
+      const successfulTotal = (report.successful_deliveries?.['2w'] || 0) + 
+                            (report.successful_deliveries?.['3w'] || 0) + 
+                            (report.successful_deliveries?.['4w'] || 0);
+      acc.totalSuccessful += successfulTotal;
+      
+      return acc;
+    }, {
+      totalInbound: 0,
+      totalOutbound: 0,
+      totalDelivered: 0,
+      totalSuccessful: 0,
+      totalFailed: 0,
+      totalBacklogs: 0
+    });
+
+    // Calculate averages
+    const averagePOF = totals.totalInbound + totals.totalBacklogs - totals.totalOutbound;
+    
+    const averageSuccessRate = totals.totalOutbound > 0
+      ? ((totals.totalDelivered / totals.totalOutbound) * 100)
+      : 0;
+    
+    const averageFailedRate = totals.totalOutbound > 0
+      ? ((totals.totalFailed / totals.totalOutbound) * 100)
+      : 0;
+    
+    const averageSDOD = (totals.totalInbound + totals.totalBacklogs) > 0
+      ? ((totals.totalOutbound / (totals.totalInbound + totals.totalBacklogs)) * 100)
+      : 0;
+
+    const averageEfficiency = filteredReports.length > 0 
+      ? ((totals.totalDelivered / (totals.totalDelivered + totals.totalFailed)) * 100)
+      : 0;
+
+    return {
+      ...totals,
+      averagePOF: isNaN(averagePOF) ? 0 : averagePOF,
+      averageSuccessRate: isNaN(averageSuccessRate) ? 0 : averageSuccessRate,
+      averageFailedRate: isNaN(averageFailedRate) ? 0 : averageFailedRate,
+      averageSDOD: isNaN(averageSDOD) ? 0 : averageSDOD,
+      averageEfficiency: isNaN(averageEfficiency) ? 0 : averageEfficiency
+    };
+  };
+
+  const summary = calculateSummary();
+
+  // Dynamic stats based on actual data
   const reportStats = [
     {
-      title: 'Total Deliveries',
-      value: '2,456',
-      change: '+12.5%',
-      trend: 'up',
+      title: 'POF (Parcel on Floor)',
+      value: summary.averagePOF.toLocaleString(),
+      change: reportsLoading ? '...' : 'Inbound + Backlogs - Outbound',
+      trend: summary.averagePOF <= 0 ? 'up' : 'down',
       icon: Package,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100'
+      color: summary.averagePOF <= 0 ? 'text-green-600' : 'text-red-600',
+      bgColor: summary.averagePOF <= 0 ? 'bg-green-100' : 'bg-red-100'
     },
     {
       title: 'Success Rate',
-      value: '94.2%',
-      change: '+2.1%',
-      trend: 'up',
+      value: `${summary.averageSuccessRate.toFixed(1)}%`,
+      change: reportsLoading ? '...' : 'Delivered / Outbound',
+      trend: summary.averageSuccessRate >= 95 ? 'up' : 'down',
       icon: CheckCircle,
       color: 'text-green-600',
       bgColor: 'bg-green-100'
     },
     {
-      title: 'Avg. Delivery Time',
-      value: '2.4 hrs',
-      change: '-15 min',
-      trend: 'up',
-      icon: Clock,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100'
+      title: 'Failed Rate',
+      value: `${summary.averageFailedRate.toFixed(1)}%`,
+      change: reportsLoading ? '...' : 'Failed / Outbound',
+      trend: summary.averageFailedRate <= 5 ? 'up' : 'down',
+      icon: AlertCircle,
+      color: summary.averageFailedRate <= 5 ? 'text-green-600' : 'text-red-600',
+      bgColor: summary.averageFailedRate <= 5 ? 'bg-green-100' : 'bg-red-100'
     },
     {
-      title: 'Failed Deliveries',
-      value: '142',
-      change: '-8.3%',
-      trend: 'up',
-      icon: AlertCircle,
-      color: 'text-red-600',
-      bgColor: 'bg-red-100'
+      title: 'SDOD Rate',
+      value: `${summary.averageSDOD.toFixed(1)}%`,
+      change: reportsLoading ? '...' : 'Outbound / (Inbound + Backlogs)',
+      trend: summary.averageSDOD >= 90 ? 'up' : 'down',
+      icon: TrendingUp,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100'
     }
-  ];
-
-  // Available hubs data
-  const availableHubs = [
-    { id: 'downtown', name: 'Downtown Hub', client: 'LEX' },
-    { id: 'north', name: 'North Hub', client: '2GO' },
-    { id: 'south', name: 'South Hub', client: 'SPX' },
-    { id: 'east', name: 'East Hub', client: 'LEX' },
-    { id: 'west', name: 'West Hub', client: '2GO' }
   ];
 
   return (
@@ -285,16 +265,25 @@ export default function ReportsPage() {
                     className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   >
                     <option value="all">All Hubs</option>
-                    <option value="downtown">Downtown</option>
-                    <option value="north">North Hub</option>
-                    <option value="south">South Hub</option>
-                    <option value="east">East Hub</option>
-                    <option value="west">West Hub</option>
+                    {hubs.map((hub) => (
+                      <option key={hub._id} value={hub._id}>
+                        {hub.name} ({hub.client})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
+                <button 
+                  onClick={() => refreshReports()}
+                  disabled={reportsLoading}
+                  className="flex items-center space-x-2 bg-gray-100 border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${reportsLoading ? 'animate-spin' : ''}`} />
+                  <span>{reportsLoading ? 'Refreshing...' : 'Refresh'}</span>
+                </button>
+                
                 <button className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                   <Download className="w-4 h-4" />
                   <span>Export</span>
@@ -350,73 +339,144 @@ export default function ReportsPage() {
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Inbound</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Outbound</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Backlogs</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900" title="Parcel on Floor: Inbound + Backlogs - Outbound">
+                      POF
+                      <span className="text-xs text-gray-500 block font-normal">Parcel on Floor</span>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Delivered</th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Failed</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Misroutes</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Vehicles</th>
-                    <th className="text-left py-3 px-4 font-medium text-gray-900">Efficiency</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900" title="Success Rate: Delivered / Outbound * 100%">
+                      Success Rate
+                      <span className="text-xs text-gray-500 block font-normal">Delivered/Outbound</span>
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900" title="Failed Rate: Failed / Outbound * 100%">
+                      Failed Rate
+                      <span className="text-xs text-gray-500 block font-normal">Failed/Outbound</span>
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-900" title="Same Day Out Delivery: Outbound / (Inbound + Backlogs) * 100%">
+                      SDOD
+                      <span className="text-xs text-gray-500 block font-normal">Same Day Out</span>
+                    </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-900">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {reportsData.map((report) => (
-                    <tr key={report.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-4 px-4 text-gray-900">{report.date}</td>
-                      <td className="py-4 px-4">
-                        <div className="font-medium text-gray-900">{report.hub}</div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                          {report.client}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4 text-gray-900">{report.inbound.toLocaleString()}</td>
-                      <td className="py-4 px-4 text-gray-900">{report.outbound.toLocaleString()}</td>
-                      <td className="py-4 px-4">
-                        <span className="text-orange-600 font-medium">{report.backlogs}</span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="text-green-600 font-medium">{report.delivered.toLocaleString()}</span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="text-red-600 font-medium">{report.failed}</span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className="text-yellow-600 font-medium">{report.misroutes}</span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="text-sm text-gray-600">
-                          <div>2W: {report.trips['2w']}</div>
-                          <div>3W: {report.trips['3w']}</div>
-                          <div>4W: {report.trips['4w']}</div>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          parseFloat(report.efficiency) >= 94 
-                            ? 'bg-green-100 text-green-800'
-                            : parseFloat(report.efficiency) >= 90
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {report.efficiency}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="View Details">
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="Download">
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="More Options">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
+                  {reportsLoading ? (
+                    <tr>
+                      <td colSpan={13} className="py-8 text-center text-gray-500">
+                        <div className="flex items-center justify-center">
+                          <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                          Loading reports...
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ) : reportsError ? (
+                    <tr>
+                      <td colSpan={13} className="py-8 text-center text-red-500">
+                        Error loading reports: {reportsError}
+                        <button 
+                          onClick={() => refreshReports()}
+                          className="ml-2 text-blue-600 hover:text-blue-800"
+                        >
+                          Try again
+                        </button>
+                      </td>
+                    </tr>
+                  ) : filteredReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={13} className="py-8 text-center text-gray-500">
+                        No reports found for the selected criteria.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredReports.map((report) => {
+                      // Calculate metrics
+                      const pof = report.inbound + report.backlogs - report.outbound;
+                      const successRate = report.outbound > 0 ? ((report.delivered / report.outbound) * 100) : 0;
+                      const failedRate = report.outbound > 0 ? ((report.failed / report.outbound) * 100) : 0;
+                      const sdod = (report.inbound + report.backlogs) > 0 ? ((report.outbound / (report.inbound + report.backlogs)) * 100) : 0;
+                      
+                      return (
+                        <tr key={report._id} className="border-b border-gray-100 hover:bg-gray-50">
+                          <td className="py-4 px-4 text-gray-900">
+                            {new Date(report.date).toLocaleDateString()}
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="font-medium text-gray-900">{report.hub.name}</div>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              report.hub.client === 'LEX' ? 'bg-blue-100 text-blue-800' :
+                              report.hub.client === '2GO' ? 'bg-green-100 text-green-800' :
+                              report.hub.client === 'SPX' ? 'bg-purple-100 text-purple-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {report.hub.client}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-gray-900">{report.inbound.toLocaleString()}</td>
+                          <td className="py-4 px-4 text-gray-900">{report.outbound.toLocaleString()}</td>
+                          <td className="py-4 px-4">
+                            <span className="text-orange-600 font-medium">{report.backlogs}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`font-medium ${
+                              pof > 0 ? 'text-red-600' : pof < 0 ? 'text-green-600' : 'text-gray-600'
+                            }`}>
+                              {pof.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-green-600 font-medium">{report.delivered.toLocaleString()}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-red-600 font-medium">{report.failed}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              successRate >= 95 ? 'bg-green-100 text-green-800' :
+                              successRate >= 85 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {successRate.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              failedRate <= 5 ? 'bg-green-100 text-green-800' :
+                              failedRate <= 15 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {failedRate.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                              sdod >= 90 ? 'bg-green-100 text-green-800' :
+                              sdod >= 70 ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {sdod.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <div className="flex items-center gap-2">
+                              <button 
+                                className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                                onClick={() => router.push(`/reports/${report._id}`)}
+                                title="View Report Details"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button className="p-1 text-gray-400 hover:text-gray-600">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -443,23 +503,34 @@ export default function ReportsPage() {
               <div className="p-6">
                 <p className="text-gray-600 mb-4">Choose which hub you want to create a report for:</p>
                 <div className="space-y-2">
-                  {availableHubs.map((hub) => (
-                    <button
-                      key={hub.id}
-                      onClick={() => handleHubSelection(hub.id, hub.name)}
-                      className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-gray-900 group-hover:text-blue-700">{hub.name}</p>
-                          <p className="text-sm text-gray-500">Client: {hub.client}</p>
+                  {hubsLoading ? (
+                    <div className="text-center py-4 text-gray-500">
+                      <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2" />
+                      Loading hubs...
+                    </div>
+                  ) : hubs.length === 0 ? (
+                    <div className="text-center py-4 text-gray-500">
+                      No hubs available. Please create a hub first.
+                    </div>
+                  ) : (
+                    hubs.map((hub) => (
+                      <button
+                        key={hub._id}
+                        onClick={() => handleHubSelection(hub._id, hub.name)}
+                        className="w-full text-left p-3 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-gray-900 group-hover:text-blue-700">{hub.name}</p>
+                            <p className="text-sm text-gray-500">Client: {hub.client}</p>
+                          </div>
+                          <div className="text-gray-400 group-hover:text-blue-500">
+                            <ChevronRight className="w-5 h-5" />
+                          </div>
                         </div>
-                        <div className="text-gray-400 group-hover:text-blue-500">
-                          <ChevronRight className="w-5 h-5" />
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

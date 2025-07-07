@@ -14,8 +14,19 @@ export default function AddReportPage() {
   // Get params from URL on component mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setSelectedHub(params.get('hub') || '');
-    setHubName(params.get('hubName') || '');
+    const hubParam = params.get('hub') || '';
+    const hubNameParam = params.get('hubName') || '';
+    
+    setSelectedHub(hubParam);
+    setHubName(hubNameParam);
+    
+    // Update reportData with the hub ID
+    if (hubParam) {
+      setReportData(prev => ({
+        ...prev,
+        hub: hubParam
+      }));
+    }
   }, []);
 
   const [reportData, setReportData] = useState({
@@ -28,6 +39,11 @@ export default function AddReportPage() {
     failed: '',
     misroutes: '',
     trips: {
+      '2w': '',
+      '3w': '',
+      '4w': ''
+    },
+    successful_deliveries: {
       '2w': '',
       '3w': '',
       '4w': ''
@@ -70,12 +86,68 @@ export default function AddReportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Here you would typically send the data to your API
-    console.log('Submitting report:', reportData);
-    
-    // For now, just show success message and redirect
-    alert('Report submitted successfully!');
-    router.push('/reports');
+    try {
+      // Prepare the data for submission
+      const submitData = {
+        ...reportData,
+        hub: selectedHub, // Ensure hub is set
+        // Convert string values to numbers where needed
+        inbound: parseInt(reportData.inbound) || 0,
+        outbound: parseInt(reportData.outbound) || 0,
+        backlogs: parseInt(reportData.backlogs) || 0,
+        delivered: parseInt(reportData.delivered) || 0,
+        failed: parseInt(reportData.failed) || 0,
+        misroutes: parseInt(reportData.misroutes) || 0,
+        trips: {
+          '2w': parseInt(reportData.trips['2w']) || 0,
+          '3w': parseInt(reportData.trips['3w']) || 0,
+          '4w': parseInt(reportData.trips['4w']) || 0
+        },
+        successful_deliveries: {
+          '2w': parseInt(reportData.successful_deliveries['2w']) || 0,
+          '3w': parseInt(reportData.successful_deliveries['3w']) || 0,
+          '4w': parseInt(reportData.successful_deliveries['4w']) || 0
+        },
+        attendance: {
+          hub_lead: parseInt(reportData.attendance.hub_lead) || 0,
+          backroom: parseInt(reportData.attendance.backroom) || 0,
+          drivers_2w: parseInt(reportData.attendance.drivers_2w) || 0,
+          drivers_3w: parseInt(reportData.attendance.drivers_3w) || 0,
+          drivers_4w: parseInt(reportData.attendance.drivers_4w) || 0
+        },
+        failed_deliveries: {
+          canceled_bef_delivery: parseInt(reportData.failed_deliveries.canceled_bef_delivery) || 0,
+          no_cash_available: parseInt(reportData.failed_deliveries.no_cash_available) || 0,
+          postpone: parseInt(reportData.failed_deliveries.postpone) || 0,
+          not_at_home: parseInt(reportData.failed_deliveries.not_at_home) || 0,
+          refuse: parseInt(reportData.failed_deliveries.refuse) || 0,
+          unreachable: parseInt(reportData.failed_deliveries.unreachable) || 0,
+          invalid_address: parseInt(reportData.failed_deliveries.invalid_address) || 0
+        }
+      };
+
+      console.log('Submitting report:', submitData);
+
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(submitData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Report submitted successfully!');
+        router.push('/reports');
+      } else {
+        throw new Error(result.error || 'Failed to submit report');
+      }
+    } catch (error) {
+      console.error('Error submitting report:', error);
+      alert('Failed to submit report. Please try again.');
+    }
   };
 
   const handleCancel = () => {
@@ -279,6 +351,52 @@ export default function AddReportPage() {
                   type="number"
                   value={reportData.trips['4w']}
                   onChange={(e) => handleInputChange('trips', '4w', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="0"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Successful Deliveries */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-center mb-4">
+              <Package className="w-5 h-5 text-green-600 mr-2" />
+              <h2 className="text-lg font-semibold text-gray-900">Successful Deliveries by Vehicle</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  2W Successful
+                </label>
+                <input
+                  type="number"
+                  value={reportData.successful_deliveries['2w']}
+                  onChange={(e) => handleInputChange('successful_deliveries', '2w', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  3W Successful
+                </label>
+                <input
+                  type="number"
+                  value={reportData.successful_deliveries['3w']}
+                  onChange={(e) => handleInputChange('successful_deliveries', '3w', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  4W Successful
+                </label>
+                <input
+                  type="number"
+                  value={reportData.successful_deliveries['4w']}
+                  onChange={(e) => handleInputChange('successful_deliveries', '4w', e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   min="0"
                 />
