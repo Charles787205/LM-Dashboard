@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import HubSidebar from '@/components/HubSidebar';
+import { Edit3, Save, X } from 'lucide-react';
 
 interface Hub {
   _id: string;
@@ -54,6 +55,8 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState<Hub | null>(null);
 
   // Fetch hub data
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
         
         if (result.success) {
           setHub(result.data);
+          setEditData(result.data);
         } else {
           setError(result.error || 'Failed to fetch hub');
         }
@@ -97,6 +101,81 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
       fetchReports();
     }
   }, [hubId, hub]);
+
+  // Handle input changes for editing
+  const handleInputChange = (field: keyof Hub, value: string | number) => {
+    if (!editData) return;
+    
+    setEditData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        [field]: value
+      };
+    });
+  };
+
+  const handleCostInputChange = (vehicle: '2W' | '3W' | '4W', value: string) => {
+    if (!editData) return;
+    
+    setEditData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        hub_cost_per_parcel: {
+          ...prev.hub_cost_per_parcel,
+          [vehicle]: parseFloat(value) || 0
+        }
+      };
+    });
+  };
+
+  const handleProfitInputChange = (vehicle: '2W' | '3W' | '4W', value: string) => {
+    if (!editData) return;
+    
+    setEditData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        hub_profit_per_parcel: {
+          ...prev.hub_profit_per_parcel,
+          [vehicle]: parseFloat(value) || 0
+        }
+      };
+    });
+  };
+
+  const handleSave = async () => {
+    if (!editData) return;
+
+    try {
+      const response = await fetch(`/api/hubs/${hubId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editData),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setHub(result.data);
+        setIsEditing(false);
+        alert('Hub updated successfully!');
+      } else {
+        throw new Error(result.error || 'Failed to update hub');
+      }
+    } catch (err) {
+      console.error('Error updating hub:', err);
+      alert('Failed to update hub. Please try again.');
+    }
+  };
+
+  const handleCancel = () => {
+    setEditData(hub);
+    setIsEditing(false);
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -166,14 +245,35 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
         <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">{hub.name}</h1>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                hub.client === 'LEX' ? 'bg-blue-100 text-blue-800' :
-                hub.client === '2GO' ? 'bg-green-100 text-green-800' :
-                'bg-purple-100 text-purple-800'
-              }`}>
-                {hub.client}
-              </span>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editData?.name || ''}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  className="text-2xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none"
+                />
+              ) : (
+                <h1 className="text-2xl font-bold text-gray-900">{hub.name}</h1>
+              )}
+              {isEditing ? (
+                <select
+                  value={editData?.client || ''}
+                  onChange={(e) => handleInputChange('client', e.target.value)}
+                  className="px-3 py-1 rounded-full text-sm font-medium border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="LEX">LEX</option>
+                  <option value="2GO">2GO</option>
+                  <option value="SPX">SPX</option>
+                </select>
+              ) : (
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  hub.client === 'LEX' ? 'bg-blue-100 text-blue-800' :
+                  hub.client === '2GO' ? 'bg-green-100 text-green-800' :
+                  'bg-purple-100 text-purple-800'
+                }`}>
+                  {hub.client}
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-3">
               <Link
@@ -182,12 +282,32 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               >
                 Add Report
               </Link>
-              <Link
-                href={`/hubs/${hub._id}/edit`}
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition-colors text-sm font-medium"
-              >
-                Edit Hub
-              </Link>
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors text-sm font-medium"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="flex items-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm font-medium"
+                >
+                  <Edit3 className="w-4 h-4 mr-2" />
+                  Edit Hub
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -247,16 +367,73 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Cost per Parcel</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['2W']}</div>
-                  <p className="text-sm text-gray-600">2W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-gray-900">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_cost_per_parcel['2W'] || 0}
+                          onChange={(e) => handleCostInputChange('2W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-gray-900 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">2W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['2W']}</div>
+                      <p className="text-sm text-gray-600">2W</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['3W']}</div>
-                  <p className="text-sm text-gray-600">3W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-gray-900">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_cost_per_parcel['3W'] || 0}
+                          onChange={(e) => handleCostInputChange('3W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-gray-900 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">3W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['3W']}</div>
+                      <p className="text-sm text-gray-600">3W</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['4W']}</div>
-                  <p className="text-sm text-gray-600">4W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-gray-900">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_cost_per_parcel['4W'] || 0}
+                          onChange={(e) => handleCostInputChange('4W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-gray-900 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">4W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-gray-900">₱{hub.hub_cost_per_parcel['4W']}</div>
+                      <p className="text-sm text-gray-600">4W</p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -266,16 +443,73 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Profit per Parcel</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['2W']}</div>
-                  <p className="text-sm text-gray-600">2W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-green-600">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_profit_per_parcel['2W'] || 0}
+                          onChange={(e) => handleProfitInputChange('2W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-green-600 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">2W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['2W']}</div>
+                      <p className="text-sm text-gray-600">2W</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['3W']}</div>
-                  <p className="text-sm text-gray-600">3W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-green-600">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_profit_per_parcel['3W'] || 0}
+                          onChange={(e) => handleProfitInputChange('3W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-green-600 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">3W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['3W']}</div>
+                      <p className="text-sm text-gray-600">3W</p>
+                    </>
+                  )}
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['4W']}</div>
-                  <p className="text-sm text-gray-600">4W</p>
+                  {isEditing ? (
+                    <div className="flex flex-col items-center">
+                      <div className="flex items-center">
+                        <span className="text-lg font-bold text-green-600">₱</span>
+                        <input
+                          type="number"
+                          value={editData?.hub_profit_per_parcel['4W'] || 0}
+                          onChange={(e) => handleProfitInputChange('4W', e.target.value)}
+                          className="w-16 ml-1 text-lg font-bold text-green-600 border-b border-gray-300 focus:outline-none focus:border-blue-500 text-center"
+                          step="0.01"
+                          min="0"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">4W</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="text-lg font-bold text-green-600">₱{hub.hub_profit_per_parcel['4W']}</div>
+                      <p className="text-sm text-gray-600">4W</p>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
