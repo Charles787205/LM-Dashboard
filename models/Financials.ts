@@ -21,6 +21,9 @@ const FinancialsSchema = new mongoose.Schema({
     type: Number,
     required: true,
     default: 0
-  }});
+  }
+}, {
+  timestamps: true // This adds createdAt and updatedAt automatically
+});
 
 export default mongoose.models.Financials || mongoose.model('Financials', FinancialsSchema);

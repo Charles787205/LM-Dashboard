@@ -32,6 +32,8 @@ interface Report {
     hub_lead: number;
     backroom: number;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export default function ReportDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -263,6 +265,20 @@ export default function ReportDetailsPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
         </div>
+
+        {/* Report Metadata */}
+        {report.createdAt && (
+          <div className="bg-gray-50 rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+            <div className="text-sm text-gray-600">
+              <div className="flex justify-between">
+                <span>Created: {new Date(report.createdAt).toLocaleString()}</span>
+                {report.updatedAt && report.updatedAt !== report.createdAt && (
+                  <span>Last updated: {new Date(report.updatedAt).toLocaleString()}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Metrics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">

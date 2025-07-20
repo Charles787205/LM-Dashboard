@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "LM Dashboard",
-  description: "Last Mile Dashboard",
+  title: "Int Tracker",
+  description: "Integration Tracker - Logistics Dashboard",
 };
 
 export default function RootLayout({

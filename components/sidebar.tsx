@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useHubs } from '@/hooks/useHubs';
+import { useSession, signOut } from 'next-auth/react';
 import {
   Home,
   BarChart3,
@@ -41,6 +42,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
   const [hubsExpanded, setHubsExpanded] = useState(true);
   const [showAddHubModal, setShowAddHubModal] = useState(false);
   const { hubs, loading, refreshHubs } = useHubs();
+  const { data: session } = useSession();
   const [hubForm, setHubForm] = useState({
     name: '',
     client: '',
@@ -75,6 +77,20 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       badge: null
     },
     {
+      id: 'hubs',
+      label: 'Hubs',
+      icon: Building2,
+      href: '/hubs',
+      badge: null
+    },
+    {
+      id: 'reports',
+      label: 'Reports',
+      icon: FileText,
+      href: '/reports',
+      badge: null
+    },
+    {
       id: 'analytics',
       label: 'Analytics',
       icon: BarChart3,
@@ -87,13 +103,6 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       icon: Users,
       href: '/users',
       badge: '2.3k'
-    },
-    {
-      id: 'reports',
-      label: 'All Reports',
-      icon: FileText,
-      href: '/reports',
-      badge: null
     },
     {
       id: 'calendar',
@@ -204,7 +213,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
               <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <Activity className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">IntTracker</h1>
+              <h1 className="text-xl font-bold text-gray-900">Int Tracker</h1>
             </div>
           )}
           {isCollapsed && (
@@ -374,24 +383,38 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
         ))}
         
         {/* User Profile */}
-        <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-3 mt-4 bg-gray-50 rounded-lg`}>
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-              JD
+        {session && (
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} p-3 mt-4 bg-gray-50 rounded-lg`}>
+            <div className="flex items-center space-x-3">
+              {session.user?.image ? (
+                <img
+                  src={session.user.image}
+                  alt={session.user.name || 'User'}
+                  className="w-8 h-8 rounded-full"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                  {session.user?.name ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                </div>
+              )}
+              {!isCollapsed && (
+                <div>
+                  <p className="text-sm font-medium text-gray-900">{session.user?.name || 'User'}</p>
+                  <p className="text-xs text-gray-500">{session.user?.email || ''}</p>
+                </div>
+              )}
             </div>
             {!isCollapsed && (
-              <div>
-                <p className="text-sm font-medium text-gray-900">John Doe</p>
-                <p className="text-xs text-gray-500">john@example.com</p>
-              </div>
+              <button 
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="p-1 rounded-md hover:bg-gray-200 transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4 text-gray-500" />
+              </button>
             )}
           </div>
-          {!isCollapsed && (
-            <button className="p-1 rounded-md hover:bg-gray-200 transition-colors">
-              <LogOut className="w-4 h-4 text-gray-500" />
-            </button>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Add Hub Modal */}

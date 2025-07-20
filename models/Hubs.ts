@@ -42,6 +42,8 @@ const HubSchema = new mongoose.Schema({
          default: 0} 
    }
    
+}, {
+   timestamps: true // This adds createdAt and updatedAt automatically
 })
 
 export default mongoose.models.Hub || mongoose.model('Hub', HubSchema)

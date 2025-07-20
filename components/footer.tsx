@@ -27,7 +27,7 @@ export default function Footer() {
               <span>Portfolio</span>
             </a>
             <span className="text-gray-400">•</span>
-            <span>© 2025 IntTracker</span>
+            <span>© 2025 Int Tracker</span>
           </div>
         </div>
       </div>

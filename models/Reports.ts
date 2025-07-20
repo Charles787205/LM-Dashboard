@@ -85,6 +85,8 @@ const reportSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true // This adds createdAt and updatedAt automatically
 })
 
 export default mongoose.models.Report || mongoose.model('Report', reportSchema);

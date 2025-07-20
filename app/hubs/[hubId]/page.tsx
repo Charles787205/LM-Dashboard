@@ -19,6 +19,8 @@ interface Hub {
     '3W': number;
     '4W': number;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface Report {
@@ -45,6 +47,8 @@ interface Report {
     '3w': number;
     '4w': number;
   };
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export default function HubDetailPage({ params }: { params: Promise<{ hubId: string }> }) {
@@ -311,6 +315,20 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
             </div>
           </div>
         </div>
+
+        {/* Hub Metadata */}
+        {hub.createdAt && (
+          <div className="bg-gray-50 border-b border-gray-200 px-6 py-3">
+            <div className="text-xs text-gray-500">
+              Created: {new Date(hub.createdAt).toLocaleString()}
+              {hub.updatedAt && hub.updatedAt !== hub.createdAt && (
+                <span className="ml-4">
+                  Last updated: {new Date(hub.updatedAt).toLocaleString()}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-6">

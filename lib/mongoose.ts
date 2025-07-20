@@ -54,3 +54,6 @@ export async function connectToDatabase(): Promise<Mongoose> {
     throw error;
   }
 }
+
+// Default export for convenience
+export default connectToDatabase;

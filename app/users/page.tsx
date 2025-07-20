@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useUsers } from '@/hooks/useUsers';
 import { Sidebar } from '@/components';
 import { 
   Search, 
@@ -22,96 +24,130 @@ import {
 } from 'lucide-react';
 
 export default function UsersPage() {
+  const { data: session } = useSession();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const {
+    data: usersData,
+    loading,
+    error,
+    updateFilters,
+    createUser,
+    updateUser,
+    deleteUser
+  } = useUsers({
+    page: currentPage,
+    limit: 10,
+    search: searchTerm,
+    status: selectedFilter === 'all' ? '' : selectedFilter,
+    role: selectedFilter === 'drivers' ? 'driver' : 
+          selectedFilter === 'managers' ? 'manager' : 
+          selectedFilter === 'dispatchers' ? 'dispatcher' : ''
+  });
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  // Sample users data
-  const users = [
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+1 (555) 123-4567',
-      role: 'Delivery Driver',
-      hub: 'Downtown Hub',
-      status: 'active',
-      joinDate: '2024-01-15',
-      avatar: 'JD',
-      deliveries: 156,
-      rating: 4.8
-    },
-    {
-      id: 2,
-      name: 'Sarah Wilson',
-      email: 'sarah.wilson@example.com',
-      phone: '+1 (555) 234-5678',
-      role: 'Hub Manager',
-      hub: 'North Hub',
-      status: 'active',
-      joinDate: '2023-08-22',
-      avatar: 'SW',
-      deliveries: 89,
-      rating: 4.9
-    },
-    {
-      id: 3,
-      name: 'Mike Johnson',
-      email: 'mike.johnson@example.com',
-      phone: '+1 (555) 345-6789',
-      role: 'Delivery Driver',
-      hub: 'South Hub',
-      status: 'inactive',
-      joinDate: '2024-03-10',
-      avatar: 'MJ',
-      deliveries: 203,
-      rating: 4.6
-    },
-    {
-      id: 4,
-      name: 'Emily Chen',
-      email: 'emily.chen@example.com',
-      phone: '+1 (555) 456-7890',
-      role: 'Dispatcher',
-      hub: 'East Hub',
-      status: 'active',
-      joinDate: '2023-12-05',
-      avatar: 'EC',
-      deliveries: 45,
-      rating: 4.7
-    },
-    {
-      id: 5,
-      name: 'David Brown',
-      email: 'david.brown@example.com',
-      phone: '+1 (555) 567-8901',
-      role: 'Delivery Driver',
-      hub: 'West Hub',
-      status: 'active',
-      joinDate: '2024-02-18',
-      avatar: 'DB',
-      deliveries: 178,
-      rating: 4.5
-    }
-  ];
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1);
+    updateFilters({
+      page: 1,
+      search: term,
+      status: selectedFilter === 'all' ? '' : selectedFilter,
+      role: selectedFilter === 'drivers' ? 'driver' : 
+            selectedFilter === 'managers' ? 'manager' : 
+            selectedFilter === 'dispatchers' ? 'dispatcher' : ''
+    });
+  };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.role.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesFilter = selectedFilter === 'all' || 
-                         (selectedFilter === 'active' && user.status === 'active') ||
-                         (selectedFilter === 'inactive' && user.status === 'inactive') ||
-                         (selectedFilter === 'drivers' && user.role === 'Delivery Driver') ||
-                         (selectedFilter === 'managers' && user.role === 'Hub Manager');
-    
-    return matchesSearch && matchesFilter;
-  });
+  const handleFilterChange = (filter: string) => {
+    setSelectedFilter(filter);
+    setCurrentPage(1);
+    updateFilters({
+      page: 1,
+      search: searchTerm,
+      status: filter === 'all' ? '' : filter,
+      role: filter === 'drivers' ? 'driver' : 
+            filter === 'managers' ? 'manager' : 
+            filter === 'dispatchers' ? 'dispatcher' : ''
+    });
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    updateFilters({
+      page,
+      search: searchTerm,
+      status: selectedFilter === 'all' ? '' : selectedFilter,
+      role: selectedFilter === 'drivers' ? 'driver' : 
+            selectedFilter === 'managers' ? 'manager' : 
+            selectedFilter === 'dispatchers' ? 'dispatcher' : ''
+    });
+  };
+
+  // Helper functions
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatPhoneNumber = (phone: string) => {
+    if (!phone) return 'N/A';
+    return phone;
+  };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="text-gray-600 mt-4">Loading users...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-red-600 text-lg">Error: {error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Sample mock users data for demonstration
+  const users = usersData?.users || [];
+
+  const filteredUsers = users;
 
   const getStatusColor = (status: string) => {
     return status === 'active' 
@@ -121,12 +157,14 @@ export default function UsersPage() {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'Delivery Driver':
+      case 'driver':
         return 'bg-blue-100 text-blue-800';
-      case 'Hub Manager':
+      case 'manager':
         return 'bg-purple-100 text-purple-800';
-      case 'Dispatcher':
+      case 'dispatcher':
         return 'bg-orange-100 text-orange-800';
+      case 'admin':
+        return 'bg-gray-100 text-gray-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -161,7 +199,10 @@ export default function UsersPage() {
               </button>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                  AD
+                  {session?.user?.name ? 
+                    session.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 
+                    'U'
+                  }
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </div>
@@ -199,13 +240,13 @@ export default function UsersPage() {
                     type="text"
                     placeholder="Search users..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
                   />
                 </div>
                 <select
                   value={selectedFilter}
-                  onChange={(e) => setSelectedFilter(e.target.value)}
+                  onChange={(e) => handleFilterChange(e.target.value)}
                   className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 >
                   <option value="all">All Users</option>
@@ -238,14 +279,18 @@ export default function UsersPage() {
                 </thead>
                 <tbody>
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={user._id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                            {user.avatar}
+                            {user.image ? (
+                              <img src={user.image} alt={user.name} className="w-10 h-10 rounded-full" />
+                            ) : (
+                              getInitials(user.name || 'Unknown')
+                            )}
                           </div>
                           <div>
-                            <p className="font-medium text-gray-900">{user.name}</p>
+                            <p className="font-medium text-gray-900">{user.name || 'Unknown'}</p>
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
                               <span className="flex items-center space-x-1">
                                 <Mail className="w-3 h-3" />
@@ -253,21 +298,21 @@ export default function UsersPage() {
                               </span>
                               <span className="flex items-center space-x-1">
                                 <Phone className="w-3 h-3" />
-                                <span>{user.phone}</span>
+                                <span>{formatPhoneNumber(user.phone || '')}</span>
                               </span>
                             </div>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleColor(user.role)}`}>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${getRoleColor(user.role)}`}>
                           {user.role}
                         </span>
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-1 text-gray-900">
                           <MapPin className="w-4 h-4 text-gray-400" />
-                          <span>{user.hub}</span>
+                          <span>{user.hubName || 'No Hub Assigned'}</span>
                         </div>
                       </td>
                       <td className="py-4 px-6">
@@ -277,12 +322,12 @@ export default function UsersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="text-sm">
-                          <p className="font-medium text-gray-900">{user.deliveries} deliveries</p>
-                          <p className="text-gray-500">⭐ {user.rating}/5.0</p>
+                          <p className="font-medium text-gray-900">{user.totalDeliveries || 0} deliveries</p>
+                          <p className="text-gray-500">⭐ {user.rating || 0}/5.0</p>
                         </div>
                       </td>
                       <td className="py-4 px-6 text-gray-900">
-                        {new Date(user.joinDate).toLocaleDateString()}
+                        {formatDate(user.joinDate)}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
@@ -310,7 +355,7 @@ export default function UsersPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{users.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{usersData?.stats.total || 0}</p>
                 </div>
                 <div className="p-3 bg-blue-100 rounded-lg">
                   <UserPlus className="w-6 h-6 text-blue-600" />
@@ -323,7 +368,7 @@ export default function UsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Active Users</p>
                   <p className="text-2xl font-bold text-green-600">
-                    {users.filter(u => u.status === 'active').length}
+                    {usersData?.stats.active || 0}
                   </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-lg">
@@ -337,7 +382,7 @@ export default function UsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Delivery Drivers</p>
                   <p className="text-2xl font-bold text-purple-600">
-                    {users.filter(u => u.role === 'Delivery Driver').length}
+                    {usersData?.stats.drivers || 0}
                   </p>
                 </div>
                 <div className="p-3 bg-purple-100 rounded-lg">
@@ -351,7 +396,7 @@ export default function UsersPage() {
                 <div>
                   <p className="text-sm text-gray-600">Avg. Rating</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {(users.reduce((sum, u) => sum + u.rating, 0) / users.length).toFixed(1)}
+                    {usersData?.stats.avgRating?.toFixed(1) || '0.0'}
                   </p>
                 </div>
                 <div className="p-3 bg-orange-100 rounded-lg">
@@ -360,6 +405,36 @@ export default function UsersPage() {
               </div>
             </div>
           </div>
+
+          {/* Pagination */}
+          {usersData?.pagination && usersData.pagination.totalPages > 1 && (
+            <div className="bg-white rounded-lg border border-gray-200 p-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm text-gray-600">
+                  Showing {((usersData.pagination.currentPage - 1) * 10) + 1} to {Math.min(usersData.pagination.currentPage * 10, usersData.pagination.totalUsers)} of {usersData.pagination.totalUsers} results
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(usersData.pagination.currentPage - 1)}
+                    disabled={!usersData.pagination.hasPrevPage}
+                    className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-2 bg-blue-600 text-white rounded-lg">
+                    {usersData.pagination.currentPage}
+                  </span>
+                  <button
+                    onClick={() => handlePageChange(usersData.pagination.currentPage + 1)}
+                    disabled={!usersData.pagination.hasNextPage}
+                    className="px-3 py-2 border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

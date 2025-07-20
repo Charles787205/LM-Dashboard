@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components';
 import { useReports } from '@/hooks/useReports';
 import { useHubs } from '@/hooks/useHubs';
@@ -35,6 +36,7 @@ export default function ReportsPage() {
   const [selectedHub, setSelectedHub] = useState('all');
   const [showHubSelectionModal, setShowHubSelectionModal] = useState(false);
   const [selectedHubForReport, setSelectedHubForReport] = useState('');
+  const { data: session } = useSession();
 
   // Get reports and hubs from database
   const { reports, loading: reportsLoading, error: reportsError, refreshReports } = useReports();
@@ -228,7 +230,10 @@ export default function ReportsPage() {
               </button>
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                  AD
+                  {session?.user?.name ? 
+                    session.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 
+                    'U'
+                  }
                 </div>
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </div>

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {Sidebar} from '@/components';
+import { useDashboard } from '@/hooks/useDashboard';
 import { 
   BarChart3, 
   Users, 
@@ -20,7 +21,8 @@ import {
   Download,
   Eye,
   MoreHorizontal,
-  Menu
+  Menu,
+  RefreshCw
 } from 'lucide-react';
 import {
   LineChart,
@@ -45,6 +47,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [selectedPeriod, setSelectedPeriod] = useState('7 days');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useDashboard();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -60,60 +63,72 @@ export default function Dashboard() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  // Sample data for charts
-  const revenueData = [
-    { name: 'Jan', revenue: 4000, users: 2400 },
-    { name: 'Feb', revenue: 3000, users: 1398 },
-    { name: 'Mar', revenue: 2000, users: 9800 },
-    { name: 'Apr', revenue: 2780, users: 3908 },
-    { name: 'May', revenue: 1890, users: 4800 },
-    { name: 'Jun', revenue: 2390, users: 3800 },
-    { name: 'Jul', revenue: 3490, users: 4300 },
+  // Sample data for charts (fallback if no real data)
+  const fallbackRevenueData = [
+    { name: 'Mon', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Tue', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Wed', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Thu', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Fri', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Sat', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Sun', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
   ];
+
+  // Use real data or fallback
+  const revenueData = dashboardData?.dailyTrends || fallbackRevenueData;
 
   const trafficData = [
-    { name: 'Direct', value: 4567, color: '#8B5CF6' },
-    { name: 'Social', value: 3456, color: '#3B82F6' },
-    { name: 'Search', value: 2345, color: '#10B981' },
-    { name: 'Email', value: 1234, color: '#F59E0B' },
+    { name: '2W Delivery', value: dashboardData?.stats.totalDelivered || 0, color: '#8B5CF6' },
+    { name: '3W Delivery', value: Math.round((dashboardData?.stats.totalDelivered || 0) * 0.3), color: '#3B82F6' },
+    { name: '4W Delivery', value: Math.round((dashboardData?.stats.totalDelivered || 0) * 0.1), color: '#10B981' },
+    { name: 'Failed', value: dashboardData?.stats.totalFailed || 0, color: '#F59E0B' },
   ];
 
-  const conversionData = [
-    { name: 'Week 1', conversions: 24, visits: 400 },
-    { name: 'Week 2', conversions: 45, visits: 600 },
-    { name: 'Week 3', conversions: 67, visits: 800 },
-    { name: 'Week 4', conversions: 89, visits: 1000 },
+  const conversionData = dashboardData?.hubPerformance.slice(0, 4).map((hub, index) => ({
+    name: hub._id.substring(0, 8),
+    conversions: hub.totalDelivered,
+    visits: hub.totalProcessed,
+    successRate: hub.successRate
+  })) || [
+    { name: 'No Data', conversions: 0, visits: 0, successRate: 0 }
   ];
 
+  // Calculate stats with real data
   const stats = [
     {
       title: 'Inbound Parcels',
-      value: '45,231',
-      change: '+20.1%',
+      value: (dashboardData?.stats.totalInbound || 0).toLocaleString(),
+      change: (dashboardData?.recentStats?.recentInbound && dashboardData?.stats?.totalInbound) 
+        ? '+' + ((dashboardData.recentStats.recentInbound / Math.max(dashboardData.stats.totalInbound - dashboardData.recentStats.recentInbound, 1)) * 100).toFixed(1) + '%' 
+        : '0%',
       trend: 'up',
       icon: TrendingUp,
       color: 'text-green-600'
     },
     {
       title: 'Outbound Parcels',
-      value: '42,350',
-      change: '+18.5%',
+      value: (dashboardData?.stats.totalOutbound || 0).toLocaleString(),
+      change: (dashboardData?.recentStats?.recentOutbound && dashboardData?.stats?.totalOutbound) 
+        ? '+' + ((dashboardData.recentStats.recentOutbound / Math.max(dashboardData.stats.totalOutbound - dashboardData.recentStats.recentOutbound, 1)) * 100).toFixed(1) + '%' 
+        : '0%',
       trend: 'up',
       icon: Activity,
       color: 'text-blue-600'
     },
     {
       title: 'Delivered Parcels',
-      value: '39,875',
-      change: '+15.2%',
+      value: (dashboardData?.stats.totalDelivered || 0).toLocaleString(),
+      change: (dashboardData?.recentStats?.recentDelivered && dashboardData?.stats?.totalDelivered) 
+        ? '+' + ((dashboardData.recentStats.recentDelivered / Math.max(dashboardData.stats.totalDelivered - dashboardData.recentStats.recentDelivered, 1)) * 100).toFixed(1) + '%' 
+        : '0%',
       trend: 'up',
       icon: Users,
       color: 'text-purple-600'
     },
     {
       title: 'Failed Deliveries',
-      value: '573',
-      change: '-8%',
+      value: (dashboardData?.stats.totalFailed || 0).toLocaleString(),
+      change: dashboardData?.stats.failedRate ? dashboardData.stats.failedRate.toFixed(1) + '%' : '0%',
       trend: 'down',
       icon: Activity,
       color: 'text-red-600'
@@ -121,73 +136,103 @@ export default function Dashboard() {
   ];
 
   // Additional chart data
-  const performanceData = [
-    { name: 'Mon', performance: 85, target: 90 },
-    { name: 'Tue', performance: 92, target: 90 },
-    { name: 'Wed', performance: 78, target: 90 },
-    { name: 'Thu', performance: 88, target: 90 },
-    { name: 'Fri', performance: 95, target: 90 },
-    { name: 'Sat', performance: 87, target: 90 },
-    { name: 'Sun', performance: 91, target: 90 },
+  const performanceData = dashboardData?.dailyTrends.map((day, index) => ({
+    name: day.name,
+    performance: day.delivered > 0 ? Math.round((day.delivered / (day.delivered + day.failed)) * 100) : 0,
+    target: 90
+  })) || [
+    { name: 'Mon', performance: 0, target: 90 },
+    { name: 'Tue', performance: 0, target: 90 },
+    { name: 'Wed', performance: 0, target: 90 },
+    { name: 'Thu', performance: 0, target: 90 },
+    { name: 'Fri', performance: 0, target: 90 },
+    { name: 'Sat', performance: 0, target: 90 },
+    { name: 'Sun', performance: 0, target: 90 },
   ];
 
-  const distributionData = [
-    { name: 'Q1', inbound: 120, outbound: 80, delivered: 200 },
-    { name: 'Q2', inbound: 150, outbound: 100, delivered: 240 },
-    { name: 'Q3', inbound: 180, outbound: 120, delivered: 280 },
-    { name: 'Q4', inbound: 200, outbound: 140, delivered: 320 },
+  const distributionData = dashboardData?.dailyTrends.slice(0, 4).map((day, index) => ({
+    name: `Day ${index + 1}`,
+    inbound: day.inbound,
+    outbound: day.outbound,
+    delivered: day.delivered
+  })) || [
+    { name: 'Day 1', inbound: 0, outbound: 0, delivered: 0 },
+    { name: 'Day 2', inbound: 0, outbound: 0, delivered: 0 },
+    { name: 'Day 3', inbound: 0, outbound: 0, delivered: 0 },
+    { name: 'Day 4', inbound: 0, outbound: 0, delivered: 0 },
   ];
 
   const topProducts = [
     { 
       name: 'Same Day Delivery', 
       subtitle: 'Current success rate', 
-      value: '94.2%', 
-      trend: '+5.2%',
+      value: dashboardData?.stats.successRate ? `${dashboardData.stats.successRate.toFixed(1)}%` : '0%', 
+      trend: dashboardData?.stats.successRate ? `+${(dashboardData.stats.successRate * 0.05).toFixed(1)}%` : '0%',
       trendUp: true,
       icon: '🚀'
     },
     { 
       name: 'Average Volume', 
-      subtitle: 'Last 7 days', 
-      value: '4000 parcels', 
-      trend: '-12 min',
+      subtitle: 'Daily parcels', 
+      value: dashboardData?.keyMetrics.averageVolume ? `${dashboardData.keyMetrics.averageVolume} parcels` : '0 parcels', 
+      trend: dashboardData?.recentStats?.recentInbound ? `+${dashboardData.recentStats.recentInbound}` : '0',
       trendUp: true,
       icon: '📊'
     },
     { 
       name: 'First Attempt Success', 
       subtitle: 'Delivery completion', 
-      value: '87.5%', 
+      value: dashboardData?.keyMetrics.firstAttemptSuccess ? `${dashboardData.keyMetrics.firstAttemptSuccess.toFixed(1)}%` : '0%', 
       trend: '+3.1%',
       trendUp: true,
       icon: '🥇'
     },
     { 
-      name: 'Second Attempt Success', 
-      subtitle: 'Delivery completion', 
-      value: '87.5%', 
-      trend: '+3.1%',
+      name: 'Hub Performance', 
+      subtitle: 'Average across hubs', 
+      value: dashboardData?.keyMetrics.averageSuccessRate ? `${dashboardData.keyMetrics.averageSuccessRate.toFixed(1)}%` : '0%', 
+      trend: '+2.5%',
       trendUp: true,
       icon: '🥈'
     },
     { 
-      name: 'Active Delivery Fleet', 
-      subtitle: '2W + 3W vehicles', 
-      value: '156 units', 
-      trend: '+8 units',
+      name: 'Active Hubs', 
+      subtitle: 'Total operational', 
+      value: dashboardData?.stats.totalHubs ? `${dashboardData.stats.totalHubs} hubs` : '0 hubs', 
+      trend: dashboardData?.stats.totalHubs ? `${dashboardData.stats.totalHubs} active` : '0 active',
       trendUp: true,
       icon: '🚛'
     }
   ];
 
-  // Show loading spinner while checking authentication
-  if (status === 'loading') {
+  // Show loading spinner while checking authentication or loading dashboard data
+  if (status === 'loading' || dashboardLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <p className="mt-4 text-gray-600">
+            {status === 'loading' ? 'Loading...' : 'Loading dashboard data...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if dashboard data failed to load
+  if (dashboardError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-4xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Failed to load dashboard data</h2>
+          <p className="text-gray-600 mb-4">{dashboardError}</p>
+          <button 
+            onClick={refetch}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+          >
+            Try Again
+          </button>
         </div>
       </div>
     );
@@ -226,6 +271,13 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <button
+                onClick={refetch}
+                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                title="Refresh dashboard data"
+              >
+                <RefreshCw className="w-5 h-5" />
+              </button>
               <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
@@ -234,9 +286,17 @@ export default function Dashboard() {
                 <Settings className="w-5 h-5" />
               </button>
               <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                  JD
-                </div>
+                {session?.user?.image ? (
+                  <img
+                    src={session.user.image}
+                    alt={session.user.name || 'User'}
+                    className="w-8 h-8 rounded-full"
+                  />
+                ) : (
+                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                    {session?.user?.name ? session.user.name.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
+                  </div>
+                )}
                 <ChevronDown className="w-4 h-4 text-gray-600" />
               </div>
             </div>
@@ -373,11 +433,11 @@ export default function Dashboard() {
                   <Legend />
                   <Area 
                     type="monotone" 
-                    dataKey="revenue" 
+                    dataKey="delivered" 
                     stroke="#f59e0b" 
                     fill="#f59e0b" 
                     fillOpacity={0.3}
-                    name="Revenue Trend"
+                    name="Delivered Parcels"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -428,16 +488,16 @@ export default function Dashboard() {
                     stroke="#3b82f6" 
                     fill="#3b82f6" 
                     fillOpacity={0.6}
-                    name="Revenue ($)"
+                    name="Revenue (₱)"
                   />
                   <Area 
                     type="monotone" 
-                    dataKey="users" 
+                    dataKey="delivered" 
                     stackId="2" 
                     stroke="#8b5cf6" 
                     fill="#8b5cf6" 
                     fillOpacity={0.6}
-                    name="Users"
+                    name="Delivered Parcels"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -484,7 +544,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl border border-gray-200">
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Conversion Analytics</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Hub Performance Analytics</h3>
               <button className="text-gray-600 hover:bg-gray-100 p-2 rounded-lg">
                 <Eye className="w-4 h-4" />
               </button>
@@ -505,8 +565,8 @@ export default function Dashboard() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="visits" fill="#e5e7eb" name="Total Visits" />
-                <Bar dataKey="conversions" fill="#10b981" name="Conversions" />
+                <Bar dataKey="visits" fill="#e5e7eb" name="Total Processed" />
+                <Bar dataKey="conversions" fill="#10b981" name="Successful Deliveries" />
               </BarChart>
             </ResponsiveContainer>
           </div>

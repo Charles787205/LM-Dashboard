@@ -41,6 +41,8 @@ const FailedDeliverySchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+}, {
+  timestamps: true // This adds createdAt and updatedAt automatically
 });
 
 export default mongoose.models.FailedDelivery || mongoose.model('FailedDelivery', FailedDeliverySchema);

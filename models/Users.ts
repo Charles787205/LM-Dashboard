@@ -30,6 +30,49 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false, // Made optional since new OAuth users won't have this initially
   },
+  phone: {
+    type: String,
+    required: false
+  },
+  hubId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Hub',
+    required: false
+  },
+  hubName: {
+    type: String,
+    required: false
+  },
+  status: {
+    type: String,
+    enum: ['active', 'inactive', 'suspended'],
+    default: 'active'
+  },
+  employeeId: {
+    type: String,
+    required: false,
+    unique: true,
+    sparse: true // Allows multiple null values
+  },
+  joinDate: {
+    type: Date,
+    default: Date.now
+  },
+  // Delivery stats for drivers
+  totalDeliveries: {
+    type: Number,
+    default: 0
+  },
+  successfulDeliveries: {
+    type: Number,
+    default: 0
+  },
+  rating: {
+    type: Number,
+    min: 0,
+    max: 5,
+    default: 0
+  },
   
   // Additional tracking fields
   createdAt: {
@@ -47,5 +90,9 @@ const UserSchema = new mongoose.Schema({
 // Index for faster queries
 UserSchema.index({ email: 1 });
 UserSchema.index({ name: 1 });
+UserSchema.index({ role: 1 });
+UserSchema.index({ status: 1 });
+UserSchema.index({ hubId: 1 });
+UserSchema.index({ employeeId: 1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);

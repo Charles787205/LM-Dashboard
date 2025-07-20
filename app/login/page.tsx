@@ -121,7 +121,7 @@ function LoginContent() {
           <p className="text-sm text-gray-600">
             Need help? Contact{' '}
             <a href="mailto:support@inttracker.com" className="text-blue-600 hover:text-blue-500">
-              support@inttracker.com
+              support@int-tracker.com
             </a>
           </p>
         </div>

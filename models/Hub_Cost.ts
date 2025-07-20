@@ -27,5 +27,7 @@ const HubCostSchema = new mongoose.Schema({
       return this.cost_type === "one-time";
     }
   }
+}, {
+  timestamps: true // This adds createdAt and updatedAt automatically
 });
 export default mongoose.models.HubCost || mongoose.model('HubCost', HubCostSchema);
