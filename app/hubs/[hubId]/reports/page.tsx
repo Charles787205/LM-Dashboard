@@ -6,6 +6,7 @@ import HubSidebar from '@/components/HubSidebar';
 import { 
   Calendar, 
   Download, 
+  Upload,
   TrendingUp,
   TrendingDown,
   Package,
@@ -59,6 +60,8 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
+  const [uploading, setUploading] = useState(false);
+  const [uploadSuccess, setUploadSuccess] = useState('');
 
   // Fetch hub data
   useEffect(() => {
@@ -144,6 +147,93 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
 
   const handleAddReport = () => {
     router.push(`/hubs/${hubId}/reports/add`);
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await fetch(`/api/hubs/${hubId}/report-template`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+
+      // Get the filename from the response headers
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'report-template.xlsx';
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="(.+)"/);
+        if (match) {
+          filename = match[1];
+        }
+      }
+
+      // Create blob and download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      setError('Failed to download report template');
+    }
+  };
+
+  const handleUploadTemplate = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      setError('Please upload an Excel file (.xlsx or .xls)');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    setUploadSuccess('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/hubs/${hubId}/upload-template`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        setUploadSuccess(`Successfully imported ${result.imported} reports!`);
+        
+        // Show any errors/warnings if they exist
+        if (result.errors && result.errors.length > 0) {
+          console.warn('Upload warnings:', result.errors);
+        }
+
+        // Refresh the reports list
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      } else {
+        setError(result.error || 'Failed to upload template');
+        if (result.details) {
+          console.error('Upload details:', result.details);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading template:', error);
+      setError('Failed to upload template');
+    } finally {
+      setUploading(false);
+      // Reset the file input
+      event.target.value = '';
+    }
   };
 
   // Calculate statistics from reports
@@ -252,6 +342,24 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
             </div>
             <div className="flex items-center space-x-4">
               <button
+                onClick={handleDownloadTemplate}
+                className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Generate Template
+              </button>
+              <label className="flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors cursor-pointer">
+                <Upload className="w-4 h-4 mr-2" />
+                {uploading ? 'Uploading...' : 'Upload Template'}
+                <input
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleUploadTemplate}
+                  className="hidden"
+                  disabled={uploading}
+                />
+              </label>
+              <button
                 onClick={handleAddReport}
                 className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
@@ -264,6 +372,25 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
 
         {/* Page Content */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+          {/* Success/Error Messages */}
+          {uploadSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-lg">
+              <div className="flex items-center">
+                <CheckCircle className="w-5 h-5 mr-2" />
+                {uploadSuccess}
+              </div>
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+              <div className="flex items-center">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                {error}
+              </div>
+            </div>
+          )}
+
           {/* Stats Cards */}
           {reportStats.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -5,12 +5,12 @@ import Hub from '@/models/Hubs';
 // GET - Fetch a specific hub by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ hubId: string }> }
 ) {
   try {
     await connectToDatabase();
-    const { id } = await params;
-    const hub = await Hub.findById(id);
+    const { hubId } = await params;
+    const hub = await Hub.findById(hubId);
     
     if (!hub) {
       return NextResponse.json(
@@ -32,15 +32,15 @@ export async function GET(
 // PUT - Update a specific hub
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ hubId: string }> }
 ) {
   try {
     await connectToDatabase();
     const body = await request.json();
-    const { id } = await params;
+    const { hubId } = await params;
     
     const updatedHub = await Hub.findByIdAndUpdate(
-      id,
+      hubId,
       body,
       { new: true, runValidators: true }
     );
