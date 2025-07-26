@@ -22,7 +22,8 @@ import {
   Eye,
   MoreHorizontal,
   Menu,
-  RefreshCw
+  RefreshCw,
+  CalendarIcon
 } from 'lucide-react';
 import {
   LineChart,
@@ -45,9 +46,21 @@ import {
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [selectedPeriod, setSelectedPeriod] = useState('7 days');
+  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('weekly');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useDashboard();
+  
+  // Prepare filters for useDashboard hook
+  const dashboardFilters = {
+    period: selectedPeriod,
+    ...(selectedPeriod === 'custom' && customStartDate && customEndDate && {
+      startDate: customStartDate,
+      endDate: customEndDate
+    })
+  };
+  
+  const { data: dashboardData, loading: dashboardLoading, error: dashboardError, refetch } = useDashboard(dashboardFilters);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -269,6 +282,41 @@ export default function Dashboard() {
                   className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                 />
               </div>
+              
+              {/* Time Period Selector */}
+              <div className="flex items-center space-x-2">
+                <CalendarIcon className="w-4 h-4 text-gray-600" />
+                <select 
+                  value={selectedPeriod} 
+                  onChange={(e) => setSelectedPeriod(e.target.value as 'daily' | 'weekly' | 'monthly' | 'custom')}
+                  className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                >
+                  <option value="daily">Today</option>
+                  <option value="weekly">Last 7 Days</option>
+                  <option value="monthly">Last 30 Days</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+                
+                {selectedPeriod === 'custom' && (
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      placeholder="From"
+                    />
+                    <span className="text-gray-500">to</span>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                      placeholder="To"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <button
@@ -305,6 +353,22 @@ export default function Dashboard() {
 
         {/* Dashboard Content */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
+        {/* Time Period Display */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <CalendarIcon className="w-5 h-5 text-blue-600" />
+            <span className="text-blue-900 font-medium">
+              Showing data for: 
+              {selectedPeriod === 'daily' && ' Today'}
+              {selectedPeriod === 'weekly' && ' Last 7 Days'}
+              {selectedPeriod === 'monthly' && ' Last 30 Days'}
+              {selectedPeriod === 'custom' && customStartDate && customEndDate && 
+                ` ${new Date(customStartDate).toLocaleDateString()} - ${new Date(customEndDate).toLocaleDateString()}`}
+              {selectedPeriod === 'custom' && (!customStartDate || !customEndDate) && ' Custom Range (Please select dates)'}
+            </span>
+          </div>
+        </div>
+        
         {/* Welcome Section */}
         
 
@@ -452,18 +516,6 @@ export default function Dashboard() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Revenue & Users</h3>
-                <div className="flex items-center space-x-2">
-                  <select 
-                    value={selectedPeriod} 
-                    onChange={(e) => setSelectedPeriod(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  >
-                    <option>7 days</option>
-                    <option>30 days</option>
-                    <option>90 days</option>
-                    <option>1 year</option>
-                  </select>
-                </div>
               </div>
             </div>
             <div className="p-6">

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { useUsers } from '@/hooks/useUsers';
 import { Sidebar } from '@/components';
 import { 
@@ -20,15 +21,37 @@ import {
   Settings,
   ChevronDown,
   Download,
-  UserPlus
+  UserPlus,
+  X
 } from 'lucide-react';
 
 export default function UsersPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  // Check user role when session loads
+  React.useEffect(() => {
+    const checkUserRole = async () => {
+      if (session?.user?.email) {
+        try {
+          const response = await fetch('/api/users/current');
+          if (response.ok) {
+            const userData = await response.json();
+            setUserRole(userData.role);
+          }
+        } catch (error) {
+          console.error('Error fetching user role:', error);
+        }
+      }
+    };
+    
+    checkUserRole();
+  }, [session]);
 
   const {
     data: usersData,
@@ -52,12 +75,34 @@ export default function UsersPage() {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
+  const handleSearch = () => {
     setCurrentPage(1);
     updateFilters({
       page: 1,
-      search: term,
+      search: searchTerm,
+      status: selectedFilter === 'all' ? '' : selectedFilter,
+      role: selectedFilter === 'drivers' ? 'driver' : 
+            selectedFilter === 'managers' ? 'manager' : 
+            selectedFilter === 'dispatchers' ? 'dispatcher' : ''
+    });
+  };
+
+  const handleSearchInputChange = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    updateFilters({
+      page: 1,
+      search: '',
       status: selectedFilter === 'all' ? '' : selectedFilter,
       role: selectedFilter === 'drivers' ? 'driver' : 
             selectedFilter === 'managers' ? 'manager' : 
@@ -88,6 +133,29 @@ export default function UsersPage() {
             selectedFilter === 'managers' ? 'manager' : 
             selectedFilter === 'dispatchers' ? 'dispatcher' : ''
     });
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm('Are you sure you want to deactivate this user? This will prevent them from signing in.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/users/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh the users list
+        window.location.reload();
+      } else {
+        const error = await response.json();
+        alert('Error: ' + (error.error || 'Failed to delete user'));
+      }
+    } catch (error) {
+      alert('An unexpected error occurred');
+      console.error('Error deleting user:', error);
+    }
   };
 
   // Helper functions
@@ -223,10 +291,15 @@ export default function UsersPage() {
                 <Download className="w-4 h-4" />
                 <span>Export</span>
               </button>
-              <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <UserPlus className="w-4 h-4" />
-                <span>Add User</span>
-              </button>
+              {userRole === 'admin' && (
+                <button 
+                  onClick={() => router.push('/admin/add-user')}
+                  className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  <span>Add User</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -234,15 +307,31 @@ export default function UsersPage() {
           <div className="bg-white rounded-lg border border-gray-200 p-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               <div className="flex items-center space-x-4">
-                <div className="relative">
+                <div className="relative flex">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
                     placeholder="Search users..."
                     value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
+                    onChange={(e) => handleSearchInputChange(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="pl-10 pr-10 py-2 border border-gray-300 rounded-l-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none w-64"
                   />
+                  {searchTerm && (
+                    <button
+                      onClick={handleClearSearch}
+                      className="absolute right-20 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                      title="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSearch}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-r-lg hover:bg-blue-700 transition-colors border border-blue-600 focus:ring-2 focus:ring-blue-500 outline-none"
+                  >
+                    Search
+                  </button>
                 </div>
                 <select
                   value={selectedFilter}
@@ -331,15 +420,29 @@ export default function UsersPage() {
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex items-center space-x-2">
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="View Details">
+                          <button 
+                            onClick={() => router.push(`/users/${user._id}`)}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" 
+                            title="View Details"
+                          >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" title="Edit User">
+                          <button 
+                            onClick={() => router.push(`/users/${user._id}/edit`)}
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg" 
+                            title="Edit User"
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Delete User">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {userRole === 'admin' && (
+                            <button 
+                              onClick={() => handleDeleteUser(user._id)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg" 
+                              title="Delete User"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>

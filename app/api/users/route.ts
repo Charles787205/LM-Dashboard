@@ -113,31 +113,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectToDatabase();
-
-    const body = await request.json();
-    const {
-      name,
-      email,
-      phone,
-      role,
-      position,
-      hubId,
-      hubName,
-      status,
-      employeeId
-    } = body;
+    
+    const { email, role } = await request.json();
 
     // Validate required fields
-    if (!name || !email) {
+    if (!email || !role) {
       return NextResponse.json(
-        { error: 'Name and email are required' },
+        { error: 'Email and role are required' },
         { status: 400 }
       );
     }
@@ -147,49 +130,91 @@ export async function POST(request: NextRequest) {
     if (existingUser) {
       return NextResponse.json(
         { error: 'User with this email already exists' },
-        { status: 409 }
+        { status: 400 }
       );
     }
 
-    // Check if employee ID is unique (if provided)
-    if (employeeId) {
-      const existingEmployee = await User.findOne({ employeeId });
-      if (existingEmployee) {
-        return NextResponse.json(
-          { error: 'Employee ID already exists' },
-          { status: 409 }
-        );
-      }
-    }
-
-    // Create new user
-    const newUser = new User({
-      name,
+    // Create new user with minimal information
+    const user = new User({
       email,
-      phone,
-      role: role || 'user',
-      position,
-      hubId,
-      hubName,
-      status: status || 'active',
-      employeeId,
-      joinDate: new Date()
+      role,
+      status: 'pending', // Will be activated when they first sign in
+      name: '', // Will be populated from OAuth
+      image: '', // Will be populated from OAuth
     });
 
-    await newUser.save();
+    await user.save();
 
-    return NextResponse.json(
-      { 
-        message: 'User created successfully',
-        user: newUser
-      },
-      { status: 201 }
-    );
-
+    return NextResponse.json({
+      message: 'User authorized successfully',
+      user: {
+        id: user._id,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      }
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating user:', error);
     return NextResponse.json(
-      { error: 'Failed to create user' },
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    await connectToDatabase();
+    
+    const { id, email, ...updateData } = await request.json();
+
+    // Validate required fields
+    if (!id) {
+      return NextResponse.json(
+        { error: 'User ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
+    const existingUser = await User.findById(id);
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Email updates are not allowed for security reasons
+    // Remove email from updateData if it was accidentally included
+    delete updateData.email;
+
+    // Update user (excluding email)
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { ...updateData, updatedAt: new Date() },
+      { new: true, runValidators: true }
+    );
+
+    return NextResponse.json({
+      message: 'User updated successfully',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        status: updatedUser.status,
+        department: updatedUser.department,
+        position: updatedUser.position,
+        phone: updatedUser.phone,
+        notes: updatedUser.notes
+      }
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

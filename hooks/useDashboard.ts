@@ -50,7 +50,13 @@ interface DashboardData {
   keyMetrics: KeyMetrics;
 }
 
-export function useDashboard() {
+interface DashboardFilters {
+  period?: 'daily' | 'weekly' | 'monthly' | 'custom';
+  startDate?: string;
+  endDate?: string;
+}
+
+export function useDashboard(filters: DashboardFilters = {}) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +66,13 @@ export function useDashboard() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/dashboard', {
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (filters.period) params.append('period', filters.period);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      
+      const response = await fetch(`/api/dashboard?${params.toString()}`, {
         headers: {
           'Cache-Control': 'no-cache',
         },
@@ -82,7 +94,7 @@ export function useDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [filters.period, filters.startDate, filters.endDate]);
 
   return {
     data,

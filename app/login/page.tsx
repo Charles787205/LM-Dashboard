@@ -29,7 +29,9 @@ function LoginContent() {
 
     // Check for error in URL params
     const errorParam = searchParams?.get('error');
-    if (errorParam) {
+    if (errorParam === 'AccessDenied') {
+      setError('Your email address is not authorized to access this system. Please contact your administrator to request access.');
+    } else if (errorParam) {
       setError('Authentication failed. Please try again.');
     }
   }, [router, searchParams]);
@@ -103,6 +105,11 @@ function LoginContent() {
 
           {/* Footer */}
           <div className="mt-8 text-center">
+            <p className="text-xs text-gray-500 mb-3">
+              Only authorized users can access this system.
+              <br />
+              Contact your administrator if you need access.
+            </p>
             <p className="text-sm text-gray-500">
               By signing in, you agree to our{' '}
               <a href="#" className="text-blue-600 hover:text-blue-500">

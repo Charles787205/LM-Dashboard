@@ -4,16 +4,51 @@ import Report from '@/models/Reports';
 import Hub from '@/models/Hubs';
 import FailedDelivery from '@/models/Failed_Deliveries';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectToDatabase();
 
-    // Get the date range for the last 7 days
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get('period') || 'weekly';
+    const customStartDate = searchParams.get('startDate');
+    const customEndDate = searchParams.get('endDate');
 
-    // Get total stats
+    // Calculate date range based on period
+    let startDate: Date;
+    let endDate: Date = new Date();
+
+    if (period === 'custom' && customStartDate && customEndDate) {
+      startDate = new Date(customStartDate);
+      endDate = new Date(customEndDate);
+      // Set end date to end of day
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      switch (period) {
+        case 'daily':
+          startDate = new Date();
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case 'weekly':
+          startDate = new Date();
+          startDate.setDate(startDate.getDate() - 7);
+          break;
+        case 'monthly':
+          startDate = new Date();
+          startDate.setMonth(startDate.getMonth() - 1);
+          break;
+        default:
+          startDate = new Date();
+          startDate.setDate(startDate.getDate() - 7);
+      }
+    }
+
+    // Get total stats for the selected period
     const totalStats = await Report.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
       {
         $group: {
           _id: null,
@@ -26,11 +61,15 @@ export async function GET() {
       }
     ]);
 
-    // Get stats for the last 7 days
-    const recentStats = await Report.aggregate([
+    // Calculate comparison period for trends
+    const periodDuration = endDate.getTime() - startDate.getTime();
+    const comparisonStartDate = new Date(startDate.getTime() - periodDuration);
+    
+    // Get stats for comparison period (for trend calculations)
+    const comparisonStats = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: sevenDaysAgo }
+          createdAt: { $gte: comparisonStartDate, $lt: startDate }
         }
       },
       {
@@ -45,11 +84,11 @@ export async function GET() {
       }
     ]);
 
-    // Get daily trend data for the last 7 days
+    // Get daily trend data for the selected period
     const dailyTrends = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: sevenDaysAgo }
+          createdAt: { $gte: startDate, $lte: endDate }
         }
       },
       {
@@ -71,8 +110,13 @@ export async function GET() {
       }
     ]);
 
-    // Get hub performance data
+    // Get hub performance data for the selected period
     const hubPerformance = await Report.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startDate, $lte: endDate }
+        }
+      },
       {
         $lookup: {
           from: 'hubs',
@@ -156,7 +200,7 @@ export async function GET() {
       totalReports: 0
     };
 
-    const recentStatsData = recentStats[0] || {
+    const recentStatsData = comparisonStats[0] || {
       recentInbound: 0,
       recentOutbound: 0,
       recentDelivered: 0,

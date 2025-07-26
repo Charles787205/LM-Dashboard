@@ -1,5 +1,7 @@
 import { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
+import { connectToDatabase } from './mongoose'
+import User from '@/models/Users'
 
 // Extend the built-in session types
 declare module "next-auth" {
@@ -11,6 +13,9 @@ declare module "next-auth" {
       image?: string | null
       role?: string
       position?: string
+      hubId?: string
+      hubName?: string
+      status?: string
     }
   }
   
@@ -21,6 +26,9 @@ declare module "next-auth" {
     image?: string | null
     role?: string
     position?: string
+    hubId?: string
+    hubName?: string
+    status?: string
   }
 }
 
@@ -33,59 +41,97 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: '/login',
-    error: '/login', // Redirect to login on error
+    error: '/unauthorized', // Redirect to unauthorized page on error
   },
   callbacks: {
-    async session({ session, token }) {
-      console.log('Session callback - token:', token)
-      console.log('Session callback - session:', session)
-      // Add user ID to session from token
-      if (session?.user && token) {
-        session.user.id = token.sub as string
-        // Add custom fields if they exist
-        if (token.role) {
-          session.user.role = token.role as string
-        }
-        if (token.position) {
-          session.user.position = token.position as string
+    signIn: async ({ user, account, profile }: any) => {
+      if (account?.provider === 'google') {
+        try {
+          await connectToDatabase();
+          
+          // Check if user exists in our database
+          const existingUser = await User.findOne({ email: user.email });
+          
+          if (!existingUser) {
+            // User not in database, deny access
+            return false;
+          }
+          
+          // Update user information with OAuth data on sign-in
+          const updateData: any = {
+            lastLogin: new Date()
+          };
+
+          // If this is their first sign-in (status is pending), activate and populate profile
+          if (existingUser.status === 'pending') {
+            updateData.status = 'active';
+            updateData.name = user.name || '';
+            updateData.image = user.image || '';
+            updateData.emailVerified = new Date();
+          } else if (existingUser.status !== 'active') {
+            // User is inactive, deny access
+            return false;
+          }
+
+          // Always update name and image in case they changed in OAuth provider
+          updateData.name = user.name || existingUser.name;
+          updateData.image = user.image || existingUser.image;
+          
+          // Update user record
+          await User.findOneAndUpdate(
+            { email: user.email },
+            updateData,
+            { new: true }
+          );
+          
+          return true;
+        } catch (error) {
+          console.error('Error checking user authorization:', error);
+          return false;
         }
       }
-      return session
+      return true;
     },
-    async jwt({ token, user }) {
-      console.log('JWT callback - user:', user)
-      console.log('JWT callback - token:', token)
-      // This callback is called whenever a JWT is created
-      if (user) {
-        token.id = user.id
-        // Add custom fields if they exist
-        if ((user as any).role) {
-          token.role = (user as any).role
-        }
-        if ((user as any).position) {
-          token.position = (user as any).position
-        }
-      }
-      return token
-    },
-    async signIn({ user, account, profile }) {
-      console.log('SignIn callback - user:', user)
-      console.log('SignIn callback - account:', account)
-      console.log('SignIn callback - profile:', profile)
+    async jwt({ token, user }: any) {
+      console.log('JWT callback - user:', user);
+      console.log('JWT callback - token:', token);
       
-      try {
-        // Ensure we have required fields
-        if (!user.email) {
-          console.error('SignIn failed: No email provided')
-          return false
+      if (user) {
+        // This runs when user signs in
+        try {
+          await connectToDatabase();
+          const dbUser = await User.findOne({ email: user.email });
+          
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.role = dbUser.role;
+            token.position = dbUser.position;
+            token.hubId = dbUser.hubId?.toString();
+            token.hubName = dbUser.hubName;
+            token.status = dbUser.status;
+          }
+        } catch (error) {
+          console.error('Error fetching user data in JWT callback:', error);
         }
-        
-        console.log('SignIn successful for:', user.email)
-        return true
-      } catch (error) {
-        console.error('SignIn callback error:', error)
-        return false
       }
+      
+      return token;
+    },
+    async session({ session, token }: any) {
+      console.log('Session callback - token:', token);
+      console.log('Session callback - session:', session);
+      
+      // Add user data to session from token
+      if (session?.user && token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+        session.user.position = token.position as string;
+        session.user.hubId = token.hubId as string;
+        session.user.hubName = token.hubName as string;
+        session.user.status = token.status as string;
+      }
+      
+      return session;
     },
     async redirect({ url, baseUrl }) {
       console.log('Redirect callback - url:', url)

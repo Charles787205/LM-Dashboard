@@ -23,14 +23,22 @@ const UserSchema = new mongoose.Schema({
   // Custom fields for your application
   role: {
     type: String,
-    enum: ['admin', 'user'],
+    enum: ['admin', 'manager', 'user'],
     default: 'user'
+  },
+  department: {
+    type: String,
+    required: false
   },
   position: {
     type: String,
     required: false, // Made optional since new OAuth users won't have this initially
   },
   phone: {
+    type: String,
+    required: false
+  },
+  notes: {
     type: String,
     required: false
   },
@@ -45,7 +53,7 @@ const UserSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['active', 'inactive', 'suspended'],
+    enum: ['active', 'inactive', 'pending'],
     default: 'active'
   },
   employeeId: {
@@ -87,12 +95,10 @@ const UserSchema = new mongoose.Schema({
   timestamps: true // Automatically manages createdAt and updatedAt
 });
 
-// Index for faster queries
-UserSchema.index({ email: 1 });
+// Index for faster queries (email and employeeId already have unique indexes from schema)
 UserSchema.index({ name: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ status: 1 });
 UserSchema.index({ hubId: 1 });
-UserSchema.index({ employeeId: 1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
