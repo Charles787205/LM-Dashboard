@@ -46,7 +46,7 @@ export async function GET(request: Request) {
     const totalStats = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
+          date: { $gte: startDate, $lte: endDate }
         }
       },
       {
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     const comparisonStats = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: comparisonStartDate, $lt: startDate }
+          date: { $gte: comparisonStartDate, $lt: startDate }
         }
       },
       {
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
     const dailyTrends = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
+          date: { $gte: startDate, $lte: endDate }
         }
       },
       {
@@ -96,7 +96,7 @@ export async function GET(request: Request) {
           _id: {
             $dateToString: {
               format: '%Y-%m-%d',
-              date: '$createdAt'
+              date: '$date'
             }
           },
           inbound: { $sum: '$inbound' },
@@ -114,7 +114,7 @@ export async function GET(request: Request) {
     const hubPerformance = await Report.aggregate([
       {
         $match: {
-          createdAt: { $gte: startDate, $lte: endDate }
+          date: { $gte: startDate, $lte: endDate }
         }
       },
       {
