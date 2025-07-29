@@ -202,7 +202,7 @@ export default function Dashboard() {
     
     { 
       name: 'SDOD Rate', 
-      subtitle: '(Inbound + Backlogs) / Outbound', 
+      subtitle: 'Outbound / (Inbound + Backlogs)', 
       value: dashboardData?.stats.sdod ? `${dashboardData.stats.sdod.toFixed(1)}%` : '0%', 
       trend: dashboardData?.keyMetrics?.sdodRate ? `${dashboardData.keyMetrics.sdodRate.toFixed(1)}%` : '0%',
       trendUp: true,
