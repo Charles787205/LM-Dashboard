@@ -125,7 +125,7 @@ export default function Dashboard() {
       title: 'Inbound Parcels',
       value: (dashboardData?.stats.totalInbound || 0).toLocaleString(),
       change: (dashboardData?.recentStats?.recentInbound && dashboardData?.stats?.totalInbound) 
-        ? '+' + ((dashboardData.recentStats.recentInbound / Math.max(dashboardData.stats.totalInbound - dashboardData.recentStats.recentInbound, 1)) * 100).toFixed(1) + '%' 
+        ? ((dashboardData.recentStats.recentInbound / dashboardData.stats.totalInbound) * 100).toFixed(1) + '% of total' 
         : '0%',
       trend: 'up',
       icon: TrendingUp,
@@ -135,7 +135,7 @@ export default function Dashboard() {
       title: 'Outbound Parcels',
       value: (dashboardData?.stats.totalOutbound || 0).toLocaleString(),
       change: (dashboardData?.recentStats?.recentOutbound && dashboardData?.stats?.totalOutbound) 
-        ? '+' + ((dashboardData.recentStats.recentOutbound / Math.max(dashboardData.stats.totalOutbound - dashboardData.recentStats.recentOutbound, 1)) * 100).toFixed(1) + '%' 
+        ? ((dashboardData.recentStats.recentOutbound / dashboardData.stats.totalOutbound) * 100).toFixed(1) + '% of total' 
         : '0%',
       trend: 'up',
       icon: Activity,
@@ -145,7 +145,7 @@ export default function Dashboard() {
       title: 'Backlogs',
       value: (dashboardData?.stats.totalBacklogs || 0).toLocaleString(),
       change: (dashboardData?.recentStats?.recentBacklogs && dashboardData?.stats?.totalBacklogs) 
-        ? '+' + ((dashboardData.recentStats.recentBacklogs / Math.max(dashboardData.stats.totalBacklogs - dashboardData.recentStats.recentBacklogs, 1)) * 100).toFixed(1) + '%' 
+        ? ((dashboardData.recentStats.recentBacklogs / dashboardData.stats.totalBacklogs) * 100).toFixed(1) + '% of total' 
         : '0%',
       trend: 'down',
       icon: Activity,
@@ -155,7 +155,7 @@ export default function Dashboard() {
       title: 'Delivered Parcels',
       value: (dashboardData?.stats.totalDelivered || 0).toLocaleString(),
       change: (dashboardData?.recentStats?.recentDelivered && dashboardData?.stats?.totalDelivered) 
-        ? '+' + ((dashboardData.recentStats.recentDelivered / Math.max(dashboardData.stats.totalDelivered - dashboardData.recentStats.recentDelivered, 1)) * 100).toFixed(1) + '%' 
+        ? ((dashboardData.recentStats.recentDelivered / dashboardData.stats.totalDelivered) * 100).toFixed(1) + '% of total' 
         : '0%',
       trend: 'up',
       icon: Users,
