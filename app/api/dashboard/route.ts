@@ -76,6 +76,7 @@ export async function GET(request: Request) {
           _id: null,
           totalInbound: { $sum: '$inbound' },
           totalOutbound: { $sum: '$outbound' },
+          totalBacklogs: { $sum: '$backlogs' },
           totalDelivered: { $sum: '$delivered' },
           totalFailed: { $sum: '$failed' },
           totalReports: { $sum: 1 }
@@ -118,6 +119,7 @@ export async function GET(request: Request) {
           _id: null,
           recentInbound: { $sum: '$inbound' },
           recentOutbound: { $sum: '$outbound' },
+          recentBacklogs: { $sum: '$backlogs' },
           recentDelivered: { $sum: '$delivered' },
           recentFailed: { $sum: '$failed' },
           recentReports: { $sum: 1 }
@@ -140,6 +142,7 @@ export async function GET(request: Request) {
           },
           inbound: { $sum: '$inbound' },
           outbound: { $sum: '$outbound' },
+          backlogs: { $sum: '$backlogs' },
           delivered: { $sum: '$delivered' },
           failed: { $sum: '$failed' }
         }
@@ -232,6 +235,7 @@ export async function GET(request: Request) {
     const currentStats = totalStats[0] || {
       totalInbound: 0,
       totalOutbound: 0,
+      totalBacklogs: 0,
       totalDelivered: 0,
       totalFailed: 0,
       totalReports: 0
@@ -240,6 +244,7 @@ export async function GET(request: Request) {
     const recentStatsData = comparisonStats[0] || {
       recentInbound: 0,
       recentOutbound: 0,
+      recentBacklogs: 0,
       recentDelivered: 0,
       recentFailed: 0,
       recentReports: 0
@@ -252,15 +257,22 @@ export async function GET(request: Request) {
     // Calculate failed rate
     const failedRate = totalProcessed > 0 ? (currentStats.totalFailed / totalProcessed) * 100 : 0;
 
+    // Calculate SDOD (Same Day on Delivery) = (inbound + backlogs) / outbound
+    const sdod = currentStats.totalOutbound > 0 
+      ? ((currentStats.totalInbound + currentStats.totalBacklogs) / currentStats.totalOutbound) * 100 
+      : 0;
+
     // Format daily trends for chart
     const formattedDailyTrends = dailyTrends.map(day => ({
       name: new Date(day._id).toLocaleDateString('en-US', { weekday: 'short' }),
       date: day._id,
       inbound: day.inbound,
       outbound: day.outbound,
+      backlogs: day.backlogs,
       delivered: day.delivered,
       failed: day.failed,
-      revenue: day.delivered * 15 // Assuming ₱15 per delivered parcel
+      revenue: day.delivered * 15, // Assuming ₱15 per delivered parcel
+      sdod: day.outbound > 0 ? ((day.inbound + day.backlogs) / day.outbound) * 100 : 0 // SDOD calculation per day
     }));
 
     // If no data for the last 7 days, create dummy entries
@@ -274,9 +286,11 @@ export async function GET(request: Request) {
           date: date.toISOString().split('T')[0],
           inbound: 0,
           outbound: 0,
+          backlogs: 0,
           delivered: 0,
           failed: 0,
-          revenue: 0
+          revenue: 0,
+          sdod: 0
         });
       }
       formattedDailyTrends.push(...dummyTrends);
@@ -286,10 +300,12 @@ export async function GET(request: Request) {
       stats: {
         totalInbound: currentStats.totalInbound,
         totalOutbound: currentStats.totalOutbound,
+        totalBacklogs: currentStats.totalBacklogs,
         totalDelivered: currentStats.totalDelivered,
         totalFailed: currentStats.totalFailed,
         successRate: Math.round(successRate * 10) / 10,
         failedRate: Math.round(failedRate * 10) / 10,
+        sdod: Math.round(sdod * 10) / 10, // SDOD percentage
         totalHubs,
         totalReports: currentStats.totalReports
       },
@@ -300,7 +316,8 @@ export async function GET(request: Request) {
         averageSuccessRate: Math.round(successRate * 10) / 10,
         averageVolume: Math.round(currentStats.totalInbound / Math.max(currentStats.totalReports, 1)),
         firstAttemptSuccess: Math.round(successRate * 0.9 * 10) / 10, // Estimated
-        activeFleet: totalHubs * 8 // Estimated vehicles per hub
+        activeFleet: totalHubs * 8, // Estimated vehicles per hub
+        sdodRate: Math.round(sdod * 10) / 10 // SDOD percentage
       },
       failedDeliveryBreakdown: totalFailedReasons > 0 ? [
         { reason: 'Not at Home', count: failedBreakdown.not_at_home, percentage: Math.round((failedBreakdown.not_at_home / totalFailedReasons) * 100 * 10) / 10, color: 'bg-red-500' },

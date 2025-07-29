@@ -86,13 +86,13 @@ export default function Dashboard() {
 
   // Sample data for charts (fallback if no real data)
   const fallbackRevenueData = [
-    { name: 'Mon', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Tue', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Wed', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Thu', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Fri', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Sat', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
-    { name: 'Sun', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
+    { name: 'Mon', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Tue', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Wed', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Thu', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Fri', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Sat', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
+    { name: 'Sun', revenue: 0, delivered: 0, inbound: 0, outbound: 0, backlogs: 0, failed: 0, sdod: 0 },
   ];
 
   // Use real data or fallback, and filter out Sundays if needed
@@ -142,6 +142,16 @@ export default function Dashboard() {
       color: 'text-blue-600'
     },
     {
+      title: 'Backlogs',
+      value: (dashboardData?.stats.totalBacklogs || 0).toLocaleString(),
+      change: (dashboardData?.recentStats?.recentBacklogs && dashboardData?.stats?.totalBacklogs) 
+        ? '+' + ((dashboardData.recentStats.recentBacklogs / Math.max(dashboardData.stats.totalBacklogs - dashboardData.recentStats.recentBacklogs, 1)) * 100).toFixed(1) + '%' 
+        : '0%',
+      trend: 'down',
+      icon: Activity,
+      color: 'text-orange-600'
+    },
+    {
       title: 'Delivered Parcels',
       value: (dashboardData?.stats.totalDelivered || 0).toLocaleString(),
       change: (dashboardData?.recentStats?.recentDelivered && dashboardData?.stats?.totalDelivered) 
@@ -189,13 +199,14 @@ export default function Dashboard() {
   ];
 
   const topProducts = [
+    
     { 
-      name: 'Same Day Delivery', 
-      subtitle: 'Current success rate', 
-      value: dashboardData?.stats.successRate ? `${dashboardData.stats.successRate.toFixed(1)}%` : '0%', 
-      trend: dashboardData?.stats.successRate ? `+${(dashboardData.stats.successRate * 0.05).toFixed(1)}%` : '0%',
+      name: 'SDOD Rate', 
+      subtitle: '(Inbound + Backlogs) / Outbound', 
+      value: dashboardData?.stats.sdod ? `${dashboardData.stats.sdod.toFixed(1)}%` : '0%', 
+      trend: dashboardData?.keyMetrics?.sdodRate ? `${dashboardData.keyMetrics.sdodRate.toFixed(1)}%` : '0%',
       trendUp: true,
-      icon: '🚀'
+      icon: '📈'
     },
     { 
       name: 'Average Volume', 
@@ -505,7 +516,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {topProducts.map((metric, index) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center space-x-3">

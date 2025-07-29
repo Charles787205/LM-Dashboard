@@ -3,10 +3,12 @@ import { useState, useEffect } from 'react';
 interface DashboardStats {
   totalInbound: number;
   totalOutbound: number;
+  totalBacklogs: number;
   totalDelivered: number;
   totalFailed: number;
   successRate: number;
   failedRate: number;
+  sdod: number;
   totalHubs: number;
   totalReports: number;
 }
@@ -16,9 +18,11 @@ interface DailyTrend {
   date: string;
   inbound: number;
   outbound: number;
+  backlogs: number;
   delivered: number;
   failed: number;
   revenue: number;
+  sdod: number;
 }
 
 interface HubPerformance {
@@ -34,6 +38,7 @@ interface KeyMetrics {
   averageVolume: number;
   firstAttemptSuccess: number;
   activeFleet: number;
+  sdodRate: number;
 }
 
 interface DashboardData {
@@ -41,6 +46,7 @@ interface DashboardData {
   recentStats: {
     recentInbound: number;
     recentOutbound: number;
+    recentBacklogs: number;
     recentDelivered: number;
     recentFailed: number;
     recentReports: number;
