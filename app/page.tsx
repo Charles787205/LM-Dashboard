@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import {Sidebar} from '@/components';
 import { useDashboard } from '@/hooks/useDashboard';
+import { useHubs } from '@/hooks/useHubs';
 import { 
   BarChart3, 
   Users, 
@@ -50,10 +51,17 @@ export default function Dashboard() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [selectedHubId, setSelectedHubId] = useState<string>('all');
+  const [excludeSundays, setExcludeSundays] = useState(false);
+  
+  // Fetch hubs for the selector
+  const { hubs, loading: hubsLoading } = useHubs();
   
   // Prepare filters for useDashboard hook
   const dashboardFilters = {
     period: selectedPeriod,
+    hubId: selectedHubId,
+    excludeSundays: excludeSundays,
     ...(selectedPeriod === 'custom' && customStartDate && customEndDate && {
       startDate: customStartDate,
       endDate: customEndDate
@@ -87,8 +95,13 @@ export default function Dashboard() {
     { name: 'Sun', revenue: 0, delivered: 0, inbound: 0, outbound: 0, failed: 0 },
   ];
 
-  // Use real data or fallback
-  const revenueData = dashboardData?.dailyTrends || fallbackRevenueData;
+  // Use real data or fallback, and filter out Sundays if needed
+  let revenueData = dashboardData?.dailyTrends || fallbackRevenueData;
+  
+  // Filter out Sundays from chart data if excludeSundays is enabled
+  if (excludeSundays) {
+    revenueData = revenueData.filter(item => item.name !== 'Sun');
+  }
 
   const trafficData = [
     { name: '2W Delivery', value: dashboardData?.stats.totalDelivered || 0, color: '#8B5CF6' },
@@ -297,6 +310,35 @@ export default function Dashboard() {
                   <option value="custom">Custom Range</option>
                 </select>
                 
+                {/* Hub Selector */}
+                <Filter className="w-4 h-4 text-gray-600" />
+                <select
+                  value={selectedHubId}
+                  onChange={(e) => setSelectedHubId(e.target.value)}
+                  disabled={hubsLoading}
+                  className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm min-w-[140px]"
+                >
+                  <option value="all">All Hubs</option>
+                  {hubs.map((hub) => (
+                    <option key={hub._id} value={hub._id}>
+                      {hub.name}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* No Sundays Toggle */}
+                <div className="flex items-center space-x-2">
+                  <label className="flex items-center space-x-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={excludeSundays}
+                      onChange={(e) => setExcludeSundays(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                    />
+                    <span>No Sundays</span>
+                  </label>
+                </div>
+                
                 {selectedPeriod === 'custom' && (
                   <div className="flex items-center space-x-2">
                     <input
@@ -353,19 +395,28 @@ export default function Dashboard() {
 
         {/* Dashboard Content */}
         <div className="flex-1 p-6 space-y-6 overflow-y-auto">
-        {/* Time Period Display */}
+        {/* Time Period and Hub Display */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-2">
-            <CalendarIcon className="w-5 h-5 text-blue-600" />
-            <span className="text-blue-900 font-medium">
-              Showing data for: 
-              {selectedPeriod === 'daily' && ' Today'}
-              {selectedPeriod === 'weekly' && ' Last 7 Days'}
-              {selectedPeriod === 'monthly' && ' Last 30 Days'}
-              {selectedPeriod === 'custom' && customStartDate && customEndDate && 
-                ` ${new Date(customStartDate).toLocaleDateString()} - ${new Date(customEndDate).toLocaleDateString()}`}
-              {selectedPeriod === 'custom' && (!customStartDate || !customEndDate) && ' Custom Range (Please select dates)'}
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <CalendarIcon className="w-5 h-5 text-blue-600" />
+              <span className="text-blue-900 font-medium">
+                Showing data for: 
+                {selectedPeriod === 'daily' && ' Today'}
+                {selectedPeriod === 'weekly' && ' Last 7 Days'}
+                {selectedPeriod === 'monthly' && ' Last 30 Days'}
+                {selectedPeriod === 'custom' && customStartDate && customEndDate && 
+                  ` ${new Date(customStartDate).toLocaleDateString()} - ${new Date(customEndDate).toLocaleDateString()}`}
+                {selectedPeriod === 'custom' && (!customStartDate || !customEndDate) && ' Custom Range (Please select dates)'}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Filter className="w-4 h-4 text-blue-600" />
+              <span className="text-blue-900 font-medium">
+                Hub: {selectedHubId === 'all' ? 'All Hubs' : hubs.find(hub => hub._id === selectedHubId)?.name || 'Unknown Hub'}
+                {excludeSundays && ' (Excluding Sundays)'}
+              </span>
+            </div>
           </div>
         </div>
         

@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/mongoose';
 import Report from '@/models/Reports';
 import Hub from '@/models/Hubs';
 import FailedDelivery from '@/models/Failed_Deliveries';
+import { Types } from 'mongoose';
 
 export async function GET(request: Request) {
   try {
@@ -12,6 +13,8 @@ export async function GET(request: Request) {
     const period = searchParams.get('period') || 'weekly';
     const customStartDate = searchParams.get('startDate');
     const customEndDate = searchParams.get('endDate');
+    const hubId = searchParams.get('hubId'); // Add hub filter parameter
+    const excludeSundays = searchParams.get('excludeSundays') === 'true'; // Add exclude sundays filter
 
     // Calculate date range based on period
     let startDate: Date;
@@ -42,12 +45,31 @@ export async function GET(request: Request) {
       }
     }
 
+    // Build base match criteria
+    const baseMatchCriteria: any = {
+      date: { $gte: startDate, $lte: endDate }
+    };
+
+    // Add hub filter if specified
+    if (hubId && hubId !== 'all') {
+      // Convert string to ObjectId if needed
+      const hubObjectId = Types.ObjectId.isValid(hubId) 
+        ? new Types.ObjectId(hubId) 
+        : hubId;
+      baseMatchCriteria.hub = hubObjectId;
+    }
+
+    // Add Sunday exclusion if specified
+    if (excludeSundays) {
+      baseMatchCriteria.$expr = {
+        $ne: [{ $dayOfWeek: '$date' }, 1] // In MongoDB, Sunday is 1, Monday is 2, etc.
+      };
+    }
+
     // Get total stats for the selected period
     const totalStats = await Report.aggregate([
       {
-        $match: {
-          date: { $gte: startDate, $lte: endDate }
-        }
+        $match: baseMatchCriteria
       },
       {
         $group: {
@@ -65,12 +87,31 @@ export async function GET(request: Request) {
     const periodDuration = endDate.getTime() - startDate.getTime();
     const comparisonStartDate = new Date(startDate.getTime() - periodDuration);
     
+    // Build comparison match criteria
+    const comparisonMatchCriteria: any = {
+      date: { $gte: comparisonStartDate, $lt: startDate }
+    };
+
+    // Add hub filter if specified
+    if (hubId && hubId !== 'all') {
+      // Convert string to ObjectId if needed
+      const hubObjectId = Types.ObjectId.isValid(hubId) 
+        ? new Types.ObjectId(hubId) 
+        : hubId;
+      comparisonMatchCriteria.hub = hubObjectId;
+    }
+
+    // Add Sunday exclusion if specified
+    if (excludeSundays) {
+      comparisonMatchCriteria.$expr = {
+        $ne: [{ $dayOfWeek: '$date' }, 1] // In MongoDB, Sunday is 1, Monday is 2, etc.
+      };
+    }
+    
     // Get stats for comparison period (for trend calculations)
     const comparisonStats = await Report.aggregate([
       {
-        $match: {
-          date: { $gte: comparisonStartDate, $lt: startDate }
-        }
+        $match: comparisonMatchCriteria
       },
       {
         $group: {
@@ -87,9 +128,7 @@ export async function GET(request: Request) {
     // Get daily trend data for the selected period
     const dailyTrends = await Report.aggregate([
       {
-        $match: {
-          date: { $gte: startDate, $lte: endDate }
-        }
+        $match: baseMatchCriteria
       },
       {
         $group: {
@@ -113,9 +152,7 @@ export async function GET(request: Request) {
     // Get hub performance data for the selected period
     const hubPerformance = await Report.aggregate([
       {
-        $match: {
-          date: { $gte: startDate, $lte: endDate }
-        }
+        $match: baseMatchCriteria
       },
       {
         $lookup: {

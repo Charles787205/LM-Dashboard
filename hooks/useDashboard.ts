@@ -48,12 +48,20 @@ interface DashboardData {
   dailyTrends: DailyTrend[];
   hubPerformance: HubPerformance[];
   keyMetrics: KeyMetrics;
+  failedDeliveryBreakdown?: Array<{
+    reason: string;
+    count: number;
+    percentage: number;
+    color: string;
+  }>;
 }
 
 interface DashboardFilters {
   period?: 'daily' | 'weekly' | 'monthly' | 'custom';
   startDate?: string;
   endDate?: string;
+  hubId?: string;
+  excludeSundays?: boolean;
 }
 
 export function useDashboard(filters: DashboardFilters = {}) {
@@ -71,6 +79,8 @@ export function useDashboard(filters: DashboardFilters = {}) {
       if (filters.period) params.append('period', filters.period);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.hubId) params.append('hubId', filters.hubId);
+      if (filters.excludeSundays) params.append('excludeSundays', 'true');
       
       const response = await fetch(`/api/dashboard?${params.toString()}`, {
         headers: {
@@ -94,7 +104,7 @@ export function useDashboard(filters: DashboardFilters = {}) {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [filters.period, filters.startDate, filters.endDate]);
+  }, [filters.period, filters.startDate, filters.endDate, filters.hubId, filters.excludeSundays]);
 
   return {
     data,
