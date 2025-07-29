@@ -70,7 +70,7 @@ export const useDashboardAnalytics = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/v1/dashboard');
+      const response = await fetch('/api/dashboard');
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

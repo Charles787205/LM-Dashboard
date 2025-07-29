@@ -24,7 +24,7 @@ export default function AdminLayout({
 
       try {
         // Check if user is admin
-        const response = await fetch('/api/v1/users/current');
+        const response = await fetch('/api/users/current');
         if (response.ok) {
           const userData = await response.json();
           if (userData.role === 'admin') {

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calendar, Save, X,Users, Package, Truck, AlertCircle, Clock } from 'lucide-react';
+import { Calendar, Save, X, Users, Package, Truck, AlertCircle, Clock } from 'lucide-react';
 
 export default function AddReportPage() {
   const router = useRouter();
@@ -128,7 +128,7 @@ export default function AddReportPage() {
 
       console.log('Submitting report:', submitData);
 
-      const response = await fetch('/api/v1/reports', {
+      const response = await fetch('/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

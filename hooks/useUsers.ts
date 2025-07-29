@@ -80,7 +80,7 @@ export const useUsers = (initialFilters: UsersFilters = {}) => {
         }
       });
 
-      const response = await fetch(`/api/v1/users?${searchParams.toString()}`);
+      const response = await fetch(`/api/users?${searchParams.toString()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -104,7 +104,7 @@ export const useUsers = (initialFilters: UsersFilters = {}) => {
 
   const createUser = async (userData: Partial<User>) => {
     try {
-      const response = await fetch('/api/v1/users', {
+      const response = await fetch('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -128,7 +128,7 @@ export const useUsers = (initialFilters: UsersFilters = {}) => {
 
   const updateUser = async (userId: string, userData: Partial<User>) => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -152,7 +152,7 @@ export const useUsers = (initialFilters: UsersFilters = {}) => {
 
   const deleteUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
       });
 
@@ -172,7 +172,7 @@ export const useUsers = (initialFilters: UsersFilters = {}) => {
 
   const getUser = async (userId: string) => {
     try {
-      const response = await fetch(`/api/v1/users/${userId}`);
+      const response = await fetch(`/api/users/${userId}`);
       
       if (!response.ok) {
         const errorData = await response.json();

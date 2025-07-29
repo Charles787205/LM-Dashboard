@@ -72,7 +72,7 @@ export function useDashboard(filters: DashboardFilters = {}) {
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       
-      const response = await fetch(`/api/v1/dashboard?${params.toString()}`, {
+      const response = await fetch(`/api/dashboard?${params.toString()}`, {
         headers: {
           'Cache-Control': 'no-cache',
         },

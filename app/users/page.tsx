@@ -39,7 +39,7 @@ export default function UsersPage() {
     const checkUserRole = async () => {
       if (session?.user?.email) {
         try {
-          const response = await fetch('/api/v1/users/current');
+          const response = await fetch('/api/users/current');
           if (response.ok) {
             const userData = await response.json();
             setUserRole(userData.role);
@@ -141,7 +141,7 @@ export default function UsersPage() {
     }
 
     try {
-      const response = await fetch(`/api/v1/users/${userId}`, {
+      const response = await fetch(`/api/users/${userId}`, {
         method: 'DELETE',
       });
 
