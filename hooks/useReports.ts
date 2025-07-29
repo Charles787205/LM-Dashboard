@@ -90,7 +90,7 @@ export function useReports(hubId?: string) {
       }
 
       setLoading(true);
-      const url = hubId ? `/api/reports?hubId=${hubId}` : '/api/reports';
+      const url = hubId ? `/api/v1/reports?hubId=${hubId}` : '/api/v1/reports';
       const response = await fetch(url, {
         headers: {
           'Cache-Control': 'no-cache'
@@ -133,7 +133,7 @@ export function useReports(hubId?: string) {
 
   const createReport = async (reportData: any) => {
     try {
-      const response = await fetch('/api/reports', {
+      const response = await fetch('/api/v1/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

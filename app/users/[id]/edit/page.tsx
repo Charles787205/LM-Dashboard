@@ -73,12 +73,12 @@ export default function EditUserPage() {
       // Exclude email from update data since it's read-only
       const { email, ...updateData } = formData;
       
-      const response = await fetch('/api/users', {
+      const response = await fetch('/api/v1/users', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: userId, ...updateData }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {

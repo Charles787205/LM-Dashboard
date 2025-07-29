@@ -39,7 +39,7 @@ export default function MigrationPage() {
     setError('');
     
     try {
-      const response = await fetch('/api/admin/migrate-timestamps');
+      const response = await fetch('/api/v1/admin/migrate-timestamps');
       const data = await response.json();
       
       if (data.success) {
@@ -61,7 +61,7 @@ export default function MigrationPage() {
     setResults(null);
     
     try {
-      const response = await fetch('/api/admin/migrate-timestamps', {
+      const response = await fetch('/api/v1/admin/migrate-timestamps', {
         method: 'POST',
       });
       const data = await response.json();

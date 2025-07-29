@@ -77,7 +77,7 @@ export const useEnhancedAnalytics = (period: string = 'last-7-days') => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/analytics?period=${period}`);
+      const response = await fetch(`/api/v1/analytics?period=${period}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

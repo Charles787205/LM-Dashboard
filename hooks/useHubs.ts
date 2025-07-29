@@ -74,7 +74,7 @@ export function useHubs() {
       }
 
       setLoading(true);
-      const response = await fetch('/api/hubs', {
+      const response = await fetch('/api/v1/hubs', {
         headers: {
           'Cache-Control': 'no-cache'
         }
