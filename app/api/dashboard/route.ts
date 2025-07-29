@@ -257,9 +257,10 @@ export async function GET(request: Request) {
     // Calculate failed rate
     const failedRate = totalProcessed > 0 ? (currentStats.totalFailed / totalProcessed) * 100 : 0;
 
-    // Calculate SDOD (Same Day on Delivery) = (inbound + backlogs) / outbound
-    const sdod = currentStats.totalOutbound > 0 
-      ? ((currentStats.totalInbound + currentStats.totalBacklogs) / currentStats.totalOutbound) * 100 
+    // Calculate SDOD (Same Day on Delivery) = outbound / (inbound + backlogs)
+    const totalIncoming = currentStats.totalInbound + currentStats.totalBacklogs;
+    const sdod = totalIncoming > 0 
+      ? (currentStats.totalOutbound / totalIncoming) * 100 
       : 0;
 
     // Format daily trends for chart
@@ -272,7 +273,10 @@ export async function GET(request: Request) {
       delivered: day.delivered,
       failed: day.failed,
       revenue: day.delivered * 15, // Assuming ₱15 per delivered parcel
-      sdod: day.outbound > 0 ? ((day.inbound + day.backlogs) / day.outbound) * 100 : 0 // SDOD calculation per day
+      sdod: (() => {
+        const totalIncoming = day.inbound + day.backlogs;
+        return totalIncoming > 0 ? (day.outbound / totalIncoming) * 100 : 0; // SDOD calculation per day
+      })()
     }));
 
     // If no data for the last 7 days, create dummy entries
