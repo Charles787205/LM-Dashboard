@@ -120,13 +120,20 @@ export default function Dashboard() {
   ];
 
   // Calculate stats with real data
+  // Calculate total processed parcels for percentage calculations
+  const totalProcessed = (dashboardData?.stats.totalInbound || 0) + 
+                         (dashboardData?.stats.totalOutbound || 0) + 
+                         (dashboardData?.stats.totalBacklogs || 0) + 
+                         (dashboardData?.stats.totalDelivered || 0) + 
+                         (dashboardData?.stats.totalFailed || 0);
+  
   const stats = [
     {
       title: 'Inbound Parcels',
       value: (dashboardData?.stats.totalInbound || 0).toLocaleString(),
-      change: (dashboardData?.recentStats?.recentInbound && dashboardData?.stats?.totalInbound) 
-        ? ((dashboardData.recentStats.recentInbound / dashboardData.stats.totalInbound) * 100).toFixed(1) + '% of total' 
-        : '0%',
+      change: totalProcessed > 0 
+        ? `${((dashboardData?.stats.totalInbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
+        : '0% of total',
       trend: 'up',
       icon: TrendingUp,
       color: 'text-green-600'
@@ -134,9 +141,9 @@ export default function Dashboard() {
     {
       title: 'Outbound Parcels',
       value: (dashboardData?.stats.totalOutbound || 0).toLocaleString(),
-      change: (dashboardData?.recentStats?.recentOutbound && dashboardData?.stats?.totalOutbound) 
-        ? ((dashboardData.recentStats.recentOutbound / dashboardData.stats.totalOutbound) * 100).toFixed(1) + '% of total' 
-        : '0%',
+      change: totalProcessed > 0 
+        ? `${((dashboardData?.stats.totalOutbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
+        : '0% of total',
       trend: 'up',
       icon: Activity,
       color: 'text-blue-600'
@@ -144,9 +151,9 @@ export default function Dashboard() {
     {
       title: 'Backlogs',
       value: (dashboardData?.stats.totalBacklogs || 0).toLocaleString(),
-      change: (dashboardData?.recentStats?.recentBacklogs && dashboardData?.stats?.totalBacklogs) 
-        ? ((dashboardData.recentStats.recentBacklogs / dashboardData.stats.totalBacklogs) * 100).toFixed(1) + '% of total' 
-        : '0%',
+      change: totalProcessed > 0 
+        ? `${((dashboardData?.stats.totalBacklogs || 0) / totalProcessed * 100).toFixed(1)}% of total`
+        : '0% of total',
       trend: 'down',
       icon: Activity,
       color: 'text-orange-600'
@@ -154,9 +161,9 @@ export default function Dashboard() {
     {
       title: 'Delivered Parcels',
       value: (dashboardData?.stats.totalDelivered || 0).toLocaleString(),
-      change: (dashboardData?.recentStats?.recentDelivered && dashboardData?.stats?.totalDelivered) 
-        ? ((dashboardData.recentStats.recentDelivered / dashboardData.stats.totalDelivered) * 100).toFixed(1) + '% of total' 
-        : '0%',
+      change: totalProcessed > 0 
+        ? `${((dashboardData?.stats.totalDelivered || 0) / totalProcessed * 100).toFixed(1)}% of total`
+        : '0% of total',
       trend: 'up',
       icon: Users,
       color: 'text-purple-600'
@@ -164,7 +171,7 @@ export default function Dashboard() {
     {
       title: 'Failed Deliveries',
       value: (dashboardData?.stats.totalFailed || 0).toLocaleString(),
-      change: dashboardData?.stats.failedRate ? dashboardData.stats.failedRate.toFixed(1) + '%' : '0%',
+      change: dashboardData?.stats.failedRate ? `${dashboardData.stats.failedRate.toFixed(1)}% failure rate` : '0% failure rate',
       trend: 'down',
       icon: Activity,
       color: 'text-red-600'
@@ -434,6 +441,16 @@ export default function Dashboard() {
         {/* Welcome Section */}
         
 
+        {/* Stats Overview Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-gray-900">Logistics Overview</h2>
+            <p className="text-gray-600 text-sm">
+              Total numbers for selected period with recent activity shown below each metric
+            </p>
+          </div>
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {stats.map((stat, index) => (
@@ -442,13 +459,18 @@ export default function Dashboard() {
                 <div className={`p-3 rounded-lg bg-gray-50 ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
-                <span className={`text-sm font-medium ${
-                  stat.title === 'Failed Deliveries' 
-                    ? (stat.trend === 'down' ? 'text-green-600' : 'text-red-600')
-                    : (stat.trend === 'up' ? 'text-green-600' : 'text-red-600')
-                }`}>
-                  {stat.change}
-                </span>
+                <div className="text-right">
+                  <span className={`text-sm font-medium ${
+                    stat.title === 'Failed Deliveries' 
+                      ? 'text-red-600'
+                      : 'text-green-600'
+                  }`}>
+                    {stat.change}
+                  </span>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {stat.title === 'Failed Deliveries' ? 'Failure rate' : 'Percentage of total'}
+                  </p>
+                </div>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
               <p className="text-gray-600">{stat.title}</p>

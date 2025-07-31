@@ -169,14 +169,14 @@ export default function AnalyticsPage() {
   const weeklyTrend = enhancedData?.dailyPerformance.map(day => ({
     day: day.name,
     deliveries: day.delivered,
-    success: day.successRate,
+    success: Math.round(day.successRate * 10) / 10,
     inbound: day.inbound,
     outbound: day.outbound,
     backlogs: day.backlogs
   })) || dashboardData.dailyTrends.map(day => ({
     day: day.name,
     deliveries: day.delivered,
-    success: day.delivered > 0 ? (day.delivered / (day.delivered + day.failed)) * 100 : 0
+    success: day.delivered > 0 ? Math.round((day.delivered / (day.delivered + day.failed)) * 100 * 10) / 10 : 0
   }));
 
   // Use enhanced client comparison data if available
@@ -249,13 +249,18 @@ export default function AnalyticsPage() {
                   )}
                 </div>
               </div>
-              <div className="text-sm text-blue-600">
-                {enhancedData?.attendanceStats && (
-                  <span className="mr-4">
-                    Avg Attendance: {Math.round((enhancedData.attendanceStats.avgHubLead + enhancedData.attendanceStats.avgBackroom) * 10) / 10}
-                  </span>
+              <div className="flex items-center space-x-2">
+                {(loading || enhancedLoading) ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+                    <span className="text-blue-700 text-sm">Loading from database...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="w-4 h-4 text-green-600" />
+                    <span className="text-green-700 text-sm">Database connected</span>
+                  </>
                 )}
-                Data updated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}
               </div>
             </div>
           </div>
@@ -300,18 +305,18 @@ export default function AnalyticsPage() {
               <div className="space-y-4">
                 {weeklyTrend.map((day, index) => (
                   <div key={index} className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <span className="text-sm font-medium text-gray-700 w-8">{day.day}</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-2 w-32">
+                    <div className="flex items-center space-x-3 flex-1 min-w-0">
+                      <span className="text-sm font-medium text-gray-700 w-8 flex-shrink-0">{day.day}</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-2 min-w-0">
                         <div 
-                          className="bg-blue-600 h-2 rounded-full" 
-                          style={{ width: `${(day.deliveries / 2500) * 100}%` }}
+                          className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${Math.min((day.deliveries / Math.max(...weeklyTrend.map(d => d.deliveries))) * 100, 100)}%` }}
                         ></div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex-shrink-0 ml-3">
                       <p className="text-sm font-semibold text-gray-900">{day.deliveries.toLocaleString()}</p>
-                      <p className="text-xs text-green-600">{day.success}%</p>
+                      <p className="text-xs text-green-600">{typeof day.success === 'number' ? day.success.toFixed(1) : day.success}%</p>
                     </div>
                   </div>
                 ))}
