@@ -451,99 +451,84 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="space-y-6">
-          {/* Combined Inbound, Outbound, Backlogs Row */}
+        {/* Stats Grid - 5 Cards in One Row */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Inbound */}
           <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Parcel Flow Overview</h3>
-            <div className="grid grid-cols-3 gap-6">
-              {/* Inbound */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="p-3 rounded-lg bg-gray-50 text-green-600">
-                    <TrendingUp className="w-6 h-6" />
-                  </div>
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900">{(dashboardData?.stats.totalInbound || 0).toLocaleString()}</h4>
-                <p className="text-gray-600 text-sm">Inbound Parcels</p>
-                <span className="text-sm font-medium text-green-600">
-                  {totalProcessed > 0 
-                    ? `${((dashboardData?.stats.totalInbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
-                    : '0% of total'}
-                </span>
-              </div>
-              
-              {/* Outbound */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="p-3 rounded-lg bg-gray-50 text-blue-600">
-                    <Activity className="w-6 h-6" />
-                  </div>
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900">{(dashboardData?.stats.totalOutbound || 0).toLocaleString()}</h4>
-                <p className="text-gray-600 text-sm">Outbound Parcels</p>
-                <span className="text-sm font-medium text-green-600">
-                  {totalProcessed > 0 
-                    ? `${((dashboardData?.stats.totalOutbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
-                    : '0% of total'}
-                </span>
-              </div>
-              
-              {/* Backlogs */}
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-2">
-                  <div className="p-3 rounded-lg bg-gray-50 text-orange-600">
-                    <Activity className="w-6 h-6" />
-                  </div>
-                </div>
-                <h4 className="text-2xl font-bold text-gray-900">{(dashboardData?.stats.totalBacklogs || 0).toLocaleString()}</h4>
-                <p className="text-gray-600 text-sm">Backlogs</p>
-                <span className="text-sm font-medium text-green-600">
-                  {totalProcessed > 0 
-                    ? `${((dashboardData?.stats.totalBacklogs || 0) / totalProcessed * 100).toFixed(1)}% of total`
-                    : '0% of total'}
-                </span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-lg bg-green-50 text-green-600">
+                <TrendingUp className="w-6 h-6" />
               </div>
             </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalInbound || 0).toLocaleString()}</h3>
+            <p className="text-gray-600 text-sm mb-2">Inbound Parcels</p>
+            <span className="text-sm font-medium text-green-600">
+              {totalProcessed > 0 
+                ? `${((dashboardData?.stats.totalInbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
+                : '0% of total'}
+            </span>
+          </div>
+          
+          {/* Outbound */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
+                <Activity className="w-6 h-6" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalOutbound || 0).toLocaleString()}</h3>
+            <p className="text-gray-600 text-sm mb-2">Outbound Parcels</p>
+            <span className="text-sm font-medium text-green-600">
+              {totalProcessed > 0 
+                ? `${((dashboardData?.stats.totalOutbound || 0) / totalProcessed * 100).toFixed(1)}% of total`
+                : '0% of total'}
+            </span>
+          </div>
+          
+          {/* Backlogs */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-lg bg-orange-50 text-orange-600">
+                <Activity className="w-6 h-6" />
+              </div>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalBacklogs || 0).toLocaleString()}</h3>
+            <p className="text-gray-600 text-sm mb-2">Backlogs</p>
+            <span className="text-sm font-medium text-green-600">
+              {totalProcessed > 0 
+                ? `${((dashboardData?.stats.totalBacklogs || 0) / totalProcessed * 100).toFixed(1)}% of total`
+                : '0% of total'}
+            </span>
           </div>
 
-          {/* Remaining Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Delivered Parcels */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-lg bg-gray-50 text-purple-600">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-green-600">
-                    {totalProcessed > 0 
-                      ? `${((dashboardData?.stats.totalDelivered || 0) / totalProcessed * 100).toFixed(1)}% of total`
-                      : '0% of total'}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">Percentage of total</p>
-                </div>
+          {/* Delivered */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-lg bg-purple-50 text-purple-600">
+                <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalDelivered || 0).toLocaleString()}</h3>
-              <p className="text-gray-600">Delivered Parcels</p>
             </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalDelivered || 0).toLocaleString()}</h3>
+            <p className="text-gray-600 text-sm mb-2">Delivered Parcels</p>
+            <span className="text-sm font-medium text-green-600">
+              {totalProcessed > 0 
+                ? `${((dashboardData?.stats.totalDelivered || 0) / totalProcessed * 100).toFixed(1)}% of total`
+                : '0% of total'}
+            </span>
+          </div>
 
-            {/* Failed Deliveries */}
-            <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
-              <div className="flex items-center justify-between mb-4">
-                <div className="p-3 rounded-lg bg-gray-50 text-red-600">
-                  <Activity className="w-6 h-6" />
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-medium text-red-600">
-                    {dashboardData?.stats.failedRate ? `${dashboardData.stats.failedRate.toFixed(1)}% failure rate` : '0% failure rate'}
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">Failure rate</p>
-                </div>
+          {/* Failed */}
+          <div className="bg-white rounded-xl p-6 border border-gray-200 hover:shadow-lg transition-all duration-200">
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-3 rounded-lg bg-red-50 text-red-600">
+                <Activity className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalFailed || 0).toLocaleString()}</h3>
-              <p className="text-gray-600">Failed Deliveries</p>
             </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-1">{(dashboardData?.stats.totalFailed || 0).toLocaleString()}</h3>
+            <p className="text-gray-600 text-sm mb-2">Failed Deliveries</p>
+            <span className="text-sm font-medium text-green-600">
+              {dashboardData?.stats.failedRate ? `${dashboardData.stats.failedRate.toFixed(1)}% failure rate` : '0% failure rate'}
+            </span>
           </div>
         </div>
 
