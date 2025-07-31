@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Sidebar } from '@/components';
@@ -58,6 +58,177 @@ export default function ReportsPage() {
   const handleHubSelection = (hubId: string, hubName: string) => {
     window.location.href = `/reports/add?hub=${hubId}&hubName=${hubName}`;
   };
+
+  // Export functionality
+  const exportToCSV = () => {
+    if (!filteredReports.length) {
+      alert('No data to export');
+      return;
+    }
+
+    const csvHeaders = [
+      'Date',
+      'Hub Name',
+      'Client',
+      'Inbound',
+      'Outbound', 
+      'Backlogs',
+      'Delivered',
+      'Failed',
+      'Misroutes',
+      'Hub Lead Attendance',
+      'Backroom Attendance',
+      '2W Trips',
+      '3W Trips', 
+      '4W Trips',
+      '2W Successful',
+      '3W Successful',
+      '4W Successful',
+      'Success Rate (%)',
+      'SDOD (%)'
+    ];
+
+    const csvRows = filteredReports.map(report => {
+      const successRate = report.outbound > 0 ? ((report.delivered / report.outbound) * 100).toFixed(2) : '0.00';
+      const sdod = (report.inbound + report.backlogs) > 0 ? ((report.outbound / (report.inbound + report.backlogs)) * 100).toFixed(2) : '0.00';
+      
+      return [
+        new Date(report.date).toLocaleDateString(),
+        `"${report.hub.name}"`,
+        report.hub.client,
+        report.inbound,
+        report.outbound,
+        report.backlogs,
+        report.delivered,
+        report.failed,
+        report.misroutes,
+        report.attendance.hub_lead,
+        report.attendance.backroom,
+        report.trips['2w'],
+        report.trips['3w'],
+        report.trips['4w'],
+        report.successful_deliveries['2w'],
+        report.successful_deliveries['3w'],
+        report.successful_deliveries['4w'],
+        successRate,
+        sdod
+      ].join(',');
+    });
+
+    const csvContent = [csvHeaders.join(','), ...csvRows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `reports_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const exportToExcel = () => {
+    if (!filteredReports.length) {
+      alert('No data to export');
+      return;
+    }
+
+    // Create Excel-compatible HTML table
+    const excelHeaders = [
+      'Date',
+      'Hub Name',
+      'Client',
+      'Inbound',
+      'Outbound', 
+      'Backlogs',
+      'Delivered',
+      'Failed',
+      'Misroutes',
+      'Hub Lead Attendance',
+      'Backroom Attendance',
+      '2W Trips',
+      '3W Trips', 
+      '4W Trips',
+      '2W Successful',
+      '3W Successful',
+      '4W Successful',
+      'Success Rate (%)',
+      'SDOD (%)'
+    ];
+
+    const excelRows = filteredReports.map(report => {
+      const successRate = report.outbound > 0 ? ((report.delivered / report.outbound) * 100).toFixed(2) : '0.00';
+      const sdod = (report.inbound + report.backlogs) > 0 ? ((report.outbound / (report.inbound + report.backlogs)) * 100).toFixed(2) : '0.00';
+      
+      return [
+        new Date(report.date).toLocaleDateString(),
+        report.hub.name,
+        report.hub.client,
+        report.inbound,
+        report.outbound,
+        report.backlogs,
+        report.delivered,
+        report.failed,
+        report.misroutes,
+        report.attendance.hub_lead,
+        report.attendance.backroom,
+        report.trips['2w'],
+        report.trips['3w'],
+        report.trips['4w'],
+        report.successful_deliveries['2w'],
+        report.successful_deliveries['3w'],
+        report.successful_deliveries['4w'],
+        successRate,
+        sdod
+      ];
+    });
+
+    const htmlTable = `
+      <table border="1">
+        <thead>
+          <tr>
+            ${excelHeaders.map(header => `<th>${header}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${excelRows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+
+    const blob = new Blob([htmlTable], { type: 'application/vnd.ms-excel' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `reports_${selectedPeriod}_${new Date().toISOString().split('T')[0]}.xls`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
+
+  // Handle click outside export menu
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Filter reports based on selected hub and period
   const filteredReports = reports.filter(report => {
@@ -289,10 +460,43 @@ export default function ReportsPage() {
                   <span>{reportsLoading ? 'Refreshing...' : 'Refresh'}</span>
                 </button>
                 
-                <button className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <Download className="w-4 h-4" />
-                  <span>Export</span>
-                </button>
+                <div className="relative" ref={exportMenuRef}>
+                  <button 
+                    onClick={() => setShowExportMenu(!showExportMenu)}
+                    className="flex items-center space-x-2 bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Export</span>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  
+                  {showExportMenu && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            exportToCSV();
+                            setShowExportMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Export as CSV</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            exportToExcel();
+                            setShowExportMenu(false);
+                          }}
+                          className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <Download className="w-4 h-4" />
+                          <span>Export as Excel</span>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
