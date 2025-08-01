@@ -302,6 +302,9 @@ export async function GET(request: Request) {
       formattedDailyTrends.push(...dummyTrends);
     }
 
+    // Calculate number of days in the selected period for average calculations
+    const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
+
     const dashboardData = {
       stats: {
         totalInbound: currentStats.totalInbound,
@@ -320,7 +323,7 @@ export async function GET(request: Request) {
       hubPerformance,
       keyMetrics: {
         averageSuccessRate: Math.round(successRate * 10) / 10,
-        averageVolume: Math.round((currentStats.totalInbound + currentStats.totalBacklogs) / Math.max(currentStats.totalReports, 1)),
+        averageVolume: Math.round((currentStats.totalInbound + currentStats.totalBacklogs) / periodDays),
         firstAttemptSuccess: Math.round(successRate * 0.9 * 10) / 10, // Estimated
         activeFleet: totalHubs * 8, // Estimated vehicles per hub
         sdodRate: Math.round(sdod * 10) / 10 // SDOD percentage
