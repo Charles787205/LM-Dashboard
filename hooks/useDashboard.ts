@@ -39,6 +39,18 @@ interface KeyMetrics {
   firstAttemptSuccess: number;
   activeFleet: number;
   sdodRate: number;
+  productivity: {
+    overall: number;
+    '2W': number;
+    '3W': number;
+    '4W': number;
+  };
+  tripsData: {
+    total2WTrips: number;
+    total3WTrips: number;
+    total4WTrips: number;
+    totalTrips: number;
+  };
 }
 
 interface DashboardData {
@@ -63,7 +75,7 @@ interface DashboardData {
 }
 
 interface DashboardFilters {
-  period?: 'daily' | 'weekly' | 'monthly' | 'custom';
+  period?: 'yesterday' | 'daily' | 'weekly' | '15days' | 'monthly' | 'custom';
   startDate?: string;
   endDate?: string;
   hubId?: string;

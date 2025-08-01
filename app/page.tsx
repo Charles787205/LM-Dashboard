@@ -47,7 +47,7 @@ import {
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [selectedPeriod, setSelectedPeriod] = useState<'daily' | 'weekly' | 'monthly' | 'custom'>('weekly');
+  const [selectedPeriod, setSelectedPeriod] = useState<'yesterday' | 'daily' | 'weekly' | '15days' | 'monthly' | 'custom'>('weekly');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -232,12 +232,20 @@ export default function Dashboard() {
       icon: '🥈'
     },
     { 
+      name: 'Overall Productivity', 
+      subtitle: 'Parcels per trip', 
+      value: dashboardData?.keyMetrics.productivity?.overall ? `${dashboardData.keyMetrics.productivity.overall.toFixed(1)} ppt` : '0.0 ppt', 
+      trend: dashboardData?.keyMetrics.tripsData?.totalTrips ? `${dashboardData.keyMetrics.tripsData.totalTrips} trips` : '0 trips',
+      trendUp: true,
+      icon: '🚚'
+    },
+    { 
       name: 'Active Hubs', 
       subtitle: 'Total operational', 
       value: dashboardData?.stats.totalHubs ? `${dashboardData.stats.totalHubs} hubs` : '0 hubs', 
       trend: dashboardData?.stats.totalHubs ? `${dashboardData.stats.totalHubs} active` : '0 active',
       trendUp: true,
-      icon: '🚛'
+      icon: '🏢'
     }
   ];
 
@@ -311,11 +319,13 @@ export default function Dashboard() {
                 <CalendarIcon className="w-4 h-4 text-gray-600" />
                 <select 
                   value={selectedPeriod} 
-                  onChange={(e) => setSelectedPeriod(e.target.value as 'daily' | 'weekly' | 'monthly' | 'custom')}
+                  onChange={(e) => setSelectedPeriod(e.target.value as 'yesterday' | 'daily' | 'weekly' | '15days' | 'monthly' | 'custom')}
                   className="border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
                 >
                   <option value="daily">Today</option>
+                  <option value="yesterday">Yesterday</option>
                   <option value="weekly">Last 7 Days</option>
+                  <option value="15days">Last 15 Days</option>
                   <option value="monthly">Last 30 Days</option>
                   <option value="custom">Custom Range</option>
                 </select>
@@ -412,8 +422,10 @@ export default function Dashboard() {
               <CalendarIcon className="w-5 h-5 text-blue-600" />
               <span className="text-blue-900 font-medium">
                 Showing data for: 
+                {selectedPeriod === 'yesterday' && ' Yesterday'}
                 {selectedPeriod === 'daily' && ' Today'}
                 {selectedPeriod === 'weekly' && ' Last 7 Days'}
+                {selectedPeriod === '15days' && ' Last 15 Days'}
                 {selectedPeriod === 'monthly' && ' Last 30 Days'}
                 {selectedPeriod === 'custom' && customStartDate && customEndDate && 
                   ` ${new Date(customStartDate).toLocaleDateString()} - ${new Date(customEndDate).toLocaleDateString()}`}

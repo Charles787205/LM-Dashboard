@@ -27,6 +27,14 @@ export async function GET(request: Request) {
       endDate.setHours(23, 59, 59, 999);
     } else {
       switch (period) {
+        case 'yesterday':
+          startDate = new Date();
+          startDate.setDate(startDate.getDate() - 1);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date();
+          endDate.setDate(endDate.getDate() - 1);
+          endDate.setHours(23, 59, 59, 999);
+          break;
         case 'daily':
           startDate = new Date();
           startDate.setHours(0, 0, 0, 0);
@@ -34,6 +42,10 @@ export async function GET(request: Request) {
         case 'weekly':
           startDate = new Date();
           startDate.setDate(startDate.getDate() - 7);
+          break;
+        case '15days':
+          startDate = new Date();
+          startDate.setDate(startDate.getDate() - 15);
           break;
         case 'monthly':
           startDate = new Date();
@@ -80,6 +92,22 @@ export async function GET(request: Request) {
           totalDelivered: { $sum: '$delivered' },
           totalFailed: { $sum: '$failed' },
           totalReports: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Get trips data for productivity calculations
+    const tripsStats = await Report.aggregate([
+      {
+        $match: baseMatchCriteria
+      },
+      {
+        $group: {
+          _id: null,
+          total2WTrips: { $sum: '$trips.2w' },
+          total3WTrips: { $sum: '$trips.3w' },
+          total4WTrips: { $sum: '$trips.4w' },
+          totalTrips: { $sum: { $add: ['$trips.2w', '$trips.3w', '$trips.4w'] } }
         }
       }
     ]);
@@ -305,6 +333,32 @@ export async function GET(request: Request) {
     // Calculate number of days in the selected period for average calculations
     const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) || 1;
 
+    // Calculate productivity metrics
+    const tripsData = tripsStats[0] || {
+      total2WTrips: 0,
+      total3WTrips: 0,
+      total4WTrips: 0,
+      totalTrips: 0
+    };
+
+    // Productivity = total outbound parcels / total trips for each vehicle type
+    // Use proportional distribution based on actual trips data if available
+    const totalTrips = tripsData.totalTrips;
+    let productivity2W = 0, productivity3W = 0, productivity4W = 0;
+    
+    if (totalTrips > 0) {
+      // Calculate proportional outbound distribution based on trips ratio
+      const outbound2W = tripsData.total2WTrips > 0 ? (currentStats.totalOutbound * (tripsData.total2WTrips / totalTrips)) : 0;
+      const outbound3W = tripsData.total3WTrips > 0 ? (currentStats.totalOutbound * (tripsData.total3WTrips / totalTrips)) : 0;
+      const outbound4W = tripsData.total4WTrips > 0 ? (currentStats.totalOutbound * (tripsData.total4WTrips / totalTrips)) : 0;
+      
+      productivity2W = tripsData.total2WTrips > 0 ? Math.round((outbound2W / tripsData.total2WTrips) * 100) / 100 : 0;
+      productivity3W = tripsData.total3WTrips > 0 ? Math.round((outbound3W / tripsData.total3WTrips) * 100) / 100 : 0;
+      productivity4W = tripsData.total4WTrips > 0 ? Math.round((outbound4W / tripsData.total4WTrips) * 100) / 100 : 0;
+    }
+    
+    const overallProductivity = totalTrips > 0 ? Math.round(currentStats.totalOutbound / totalTrips * 100) / 100 : 0;
+
     const dashboardData = {
       stats: {
         totalInbound: currentStats.totalInbound,
@@ -326,7 +380,19 @@ export async function GET(request: Request) {
         averageVolume: Math.round((currentStats.totalInbound + currentStats.totalBacklogs) / periodDays),
         firstAttemptSuccess: Math.round(successRate * 0.9 * 10) / 10, // Estimated
         activeFleet: totalHubs * 8, // Estimated vehicles per hub
-        sdodRate: Math.round(sdod * 10) / 10 // SDOD percentage
+        sdodRate: Math.round(sdod * 10) / 10, // SDOD percentage
+        productivity: {
+          overall: overallProductivity,
+          '2W': productivity2W,
+          '3W': productivity3W,
+          '4W': productivity4W
+        },
+        tripsData: {
+          total2WTrips: tripsData.total2WTrips,
+          total3WTrips: tripsData.total3WTrips,
+          total4WTrips: tripsData.total4WTrips,
+          totalTrips: tripsData.totalTrips
+        }
       },
       failedDeliveryBreakdown: totalFailedReasons > 0 ? [
         { reason: 'Not at Home', count: failedBreakdown.not_at_home, percentage: Math.round((failedBreakdown.not_at_home / totalFailedReasons) * 100 * 10) / 10, color: 'bg-red-500' },
