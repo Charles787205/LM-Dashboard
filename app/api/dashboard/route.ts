@@ -272,6 +272,7 @@ export async function GET(request: Request) {
       backlogs: day.backlogs,
       delivered: day.delivered,
       failed: day.failed,
+      inboundWithBacklogs: day.inbound + day.backlogs, // Combined inbound + backlogs for chart
       revenue: day.delivered * 15, // Assuming ₱15 per delivered parcel
       sdod: (() => {
         const totalIncoming = day.inbound + day.backlogs;
@@ -293,6 +294,7 @@ export async function GET(request: Request) {
           backlogs: 0,
           delivered: 0,
           failed: 0,
+          inboundWithBacklogs: 0, // Combined inbound + backlogs for chart
           revenue: 0,
           sdod: 0
         });

@@ -627,10 +627,28 @@ export default function Dashboard() {
                   <Legend />
                   <Area 
                     type="monotone" 
-                    dataKey="delivered" 
+                    dataKey="inbound" 
+                    stackId="1"
+                    stroke="#3b82f6" 
+                    fill="#3b82f6" 
+                    fillOpacity={0.6}
+                    name="Inbound Parcels"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="backlogs" 
+                    stackId="1"
                     stroke="#f59e0b" 
                     fill="#f59e0b" 
-                    fillOpacity={0.3}
+                    fillOpacity={0.6}
+                    name="Backlogs"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="delivered" 
+                    stroke="#10b981" 
+                    fill="#10b981" 
+                    fillOpacity={0.4}
                     name="Delivered Parcels"
                   />
                 </AreaChart>
