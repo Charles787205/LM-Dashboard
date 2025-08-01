@@ -224,14 +224,6 @@ export default function Dashboard() {
       icon: '📊'
     },
     { 
-      name: 'First Attempt Success', 
-      subtitle: 'Delivery completion', 
-      value: dashboardData?.keyMetrics.firstAttemptSuccess ? `${dashboardData.keyMetrics.firstAttemptSuccess.toFixed(1)}%` : '0%', 
-      trend: '+3.1%',
-      trendUp: true,
-      icon: '🥇'
-    },
-    { 
       name: 'Hub Performance', 
       subtitle: 'Average across hubs', 
       value: dashboardData?.keyMetrics.averageSuccessRate ? `${dashboardData.keyMetrics.averageSuccessRate.toFixed(1)}%` : '0%', 

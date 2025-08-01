@@ -318,7 +318,7 @@ export async function GET(request: Request) {
       hubPerformance,
       keyMetrics: {
         averageSuccessRate: Math.round(successRate * 10) / 10,
-        averageVolume: Math.round(currentStats.totalInbound / Math.max(currentStats.totalReports, 1)),
+        averageVolume: Math.round((currentStats.totalInbound + currentStats.totalBacklogs) / Math.max(currentStats.totalReports, 1)),
         firstAttemptSuccess: Math.round(successRate * 0.9 * 10) / 10, // Estimated
         activeFleet: totalHubs * 8, // Estimated vehicles per hub
         sdodRate: Math.round(sdod * 10) / 10 // SDOD percentage

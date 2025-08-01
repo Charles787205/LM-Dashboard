@@ -103,13 +103,6 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       icon: Users,
       href: '/users',
       badge: '2.3k'
-    },
-    {
-      id: 'calendar',
-      label: 'Calendar',
-      icon: Calendar,
-      href: '/calendar',
-      badge: null
     }
   ];
 

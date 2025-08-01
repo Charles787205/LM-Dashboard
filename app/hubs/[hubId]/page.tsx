@@ -153,7 +153,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
     if (!editData) return;
 
     try {
-      const response = await fetch(`/api/hubs/${hubId}`, {
+      const response = await fetch(`/api/v1/hubs/${hubId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -579,6 +579,9 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                           Outbound
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Backlogs
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           POF
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -615,6 +618,11 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
                               {report.outbound}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              {report.backlogs}
                             </span>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
