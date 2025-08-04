@@ -32,8 +32,11 @@ interface ClientComparison {
 interface VehicleTypeData {
   type: string;
   trips: number;
+  successfulDeliveries: number;
   efficiency: number;
   avgDeliveries: number;
+  productivity: number;
+  color: string;
 }
 
 interface DailyPerformance {

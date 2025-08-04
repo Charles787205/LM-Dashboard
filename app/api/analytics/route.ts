@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       }
     ]);
 
-    // Get vehicle type analytics based on trips data
+    // Get vehicle type analytics based on trips data with successful deliveries
     const vehicleAnalytics = await Report.aggregate([
       {
         $match: {
@@ -164,15 +164,23 @@ export async function GET(request: NextRequest) {
       {
         $group: {
           _id: null,
-          total2W: { $sum: '$trips.2W' },
-          total3W: { $sum: '$trips.3W' },
-          total4W: { $sum: '$trips.4W' },
-          totalDelivered: { $sum: '$delivered' }
+          total2W: { $sum: '$trips.2w' },
+          total3W: { $sum: '$trips.3w' },
+          total4W: { $sum: '$trips.4w' },
+          successful2W: { $sum: '$successful_deliveries.2w' },
+          successful3W: { $sum: '$successful_deliveries.3w' },
+          successful4W: { $sum: '$successful_deliveries.4w' },
+          totalDelivered: { $sum: '$delivered' },
+          totalOutbound: { $sum: '$outbound' }
         }
       }
     ]);
 
-    const vehicleData = vehicleAnalytics[0] || { total2W: 0, total3W: 0, total4W: 0, totalDelivered: 0 };
+    const vehicleData = vehicleAnalytics[0] || { 
+      total2W: 0, total3W: 0, total4W: 0, 
+      successful2W: 0, successful3W: 0, successful4W: 0,
+      totalDelivered: 0, totalOutbound: 0 
+    };
     const totalTrips = vehicleData.total2W + vehicleData.total3W + vehicleData.total4W;
 
     // Get time-based performance trends
@@ -252,20 +260,29 @@ export async function GET(request: NextRequest) {
           {
             type: '2-Wheeler',
             trips: vehicleData.total2W,
-            efficiency: totalTrips > 0 ? Math.round((vehicleData.total2W / totalTrips) * 100 * 10) / 10 : 0,
-            avgDeliveries: vehicleData.total2W > 0 ? Math.round((vehicleData.totalDelivered * 0.6) / vehicleData.total2W * 10) / 10 : 0
+            successfulDeliveries: vehicleData.successful2W,
+            efficiency: vehicleData.total2W > 0 ? Math.round((vehicleData.successful2W / vehicleData.total2W) * 100 * 10) / 10 : 0,
+            avgDeliveries: vehicleData.total2W > 0 ? Math.round(vehicleData.successful2W / vehicleData.total2W * 10) / 10 : 0,
+            productivity: vehicleData.total2W > 0 ? Math.round((vehicleData.totalOutbound * 0.6) / vehicleData.total2W * 10) / 10 : 0,
+            color: '#3B82F6'
           },
           {
             type: '3-Wheeler',
             trips: vehicleData.total3W,
-            efficiency: totalTrips > 0 ? Math.round((vehicleData.total3W / totalTrips) * 100 * 10) / 10 : 0,
-            avgDeliveries: vehicleData.total3W > 0 ? Math.round((vehicleData.totalDelivered * 0.3) / vehicleData.total3W * 10) / 10 : 0
+            successfulDeliveries: vehicleData.successful3W,
+            efficiency: vehicleData.total3W > 0 ? Math.round((vehicleData.successful3W / vehicleData.total3W) * 100 * 10) / 10 : 0,
+            avgDeliveries: vehicleData.total3W > 0 ? Math.round(vehicleData.successful3W / vehicleData.total3W * 10) / 10 : 0,
+            productivity: vehicleData.total3W > 0 ? Math.round((vehicleData.totalOutbound * 0.3) / vehicleData.total3W * 10) / 10 : 0,
+            color: '#10B981'
           },
           {
             type: '4-Wheeler',
             trips: vehicleData.total4W,
-            efficiency: totalTrips > 0 ? Math.round((vehicleData.total4W / totalTrips) * 100 * 10) / 10 : 0,
-            avgDeliveries: vehicleData.total4W > 0 ? Math.round((vehicleData.totalDelivered * 0.1) / vehicleData.total4W * 10) / 10 : 0
+            successfulDeliveries: vehicleData.successful4W,
+            efficiency: vehicleData.total4W > 0 ? Math.round((vehicleData.successful4W / vehicleData.total4W) * 100 * 10) / 10 : 0,
+            avgDeliveries: vehicleData.total4W > 0 ? Math.round(vehicleData.successful4W / vehicleData.total4W * 10) / 10 : 0,
+            productivity: vehicleData.total4W > 0 ? Math.round((vehicleData.totalOutbound * 0.1) / vehicleData.total4W * 10) / 10 : 0,
+            color: '#F59E0B'
           }
         ],
         dailyPerformance: dailyPerformance.map(day => ({

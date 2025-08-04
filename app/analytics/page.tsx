@@ -26,6 +26,18 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  LineChart,
+  Line
+} from 'recharts';
 
 export default function AnalyticsPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -160,9 +172,33 @@ export default function AnalyticsPage() {
       ];
 
   const vehicleTypeData = enhancedData?.vehicleTypeData || [
-    { type: '2-Wheeler', trips: Math.floor(dashboardData.stats.totalDelivered * 0.6), efficiency: 95.2, avgDeliveries: 12.4 },
-    { type: '3-Wheeler', trips: Math.floor(dashboardData.stats.totalDelivered * 0.3), efficiency: 91.8, avgDeliveries: 18.7 },
-    { type: '4-Wheeler', trips: Math.floor(dashboardData.stats.totalDelivered * 0.1), efficiency: 88.9, avgDeliveries: 45.2 }
+    { 
+      type: '2-Wheeler', 
+      trips: Math.floor(dashboardData.stats.totalDelivered * 0.6), 
+      successfulDeliveries: Math.floor(dashboardData.stats.totalDelivered * 0.5),
+      efficiency: 95.2, 
+      avgDeliveries: 12.4,
+      productivity: 8.5,
+      color: '#3B82F6'
+    },
+    { 
+      type: '3-Wheeler', 
+      trips: Math.floor(dashboardData.stats.totalDelivered * 0.3), 
+      successfulDeliveries: Math.floor(dashboardData.stats.totalDelivered * 0.27),
+      efficiency: 91.8, 
+      avgDeliveries: 18.7,
+      productivity: 15.2,
+      color: '#10B981'
+    },
+    { 
+      type: '4-Wheeler', 
+      trips: Math.floor(dashboardData.stats.totalDelivered * 0.1), 
+      successfulDeliveries: Math.floor(dashboardData.stats.totalDelivered * 0.08),
+      efficiency: 88.9, 
+      avgDeliveries: 45.2,
+      productivity: 25.0,
+      color: '#F59E0B'
+    }
   ];
 
   // Use enhanced daily trends data if available, otherwise use dashboard data
@@ -414,22 +450,65 @@ export default function AnalyticsPage() {
                 <h2 className="text-lg font-semibold text-gray-900">Vehicle Type Performance</h2>
                 <Truck className="w-5 h-5 text-gray-400" />
               </div>
-              <div className="space-y-4">
+              
+              {/* Chart */}
+              <div className="mb-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={vehicleTypeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis 
+                      dataKey="type" 
+                      stroke="#6b7280"
+                      fontSize={12}
+                    />
+                    <YAxis stroke="#6b7280" fontSize={12} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'white', 
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                      formatter={(value, name) => [
+                        typeof value === 'number' ? value.toLocaleString() : value,
+                        name
+                      ]}
+                    />
+                    <Legend />
+                    <Bar 
+                      dataKey="trips" 
+                      fill="#3B82F6" 
+                      name="Total Trips"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar 
+                      dataKey="successfulDeliveries" 
+                      fill="#10B981" 
+                      name="Successful Deliveries"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Metrics Summary */}
+              <div className="grid grid-cols-3 gap-4">
                 {vehicleTypeData.map((vehicle, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-medium text-gray-900">{vehicle.type}</h3>
-                      <span className="text-sm text-gray-500">{vehicle.trips} trips</span>
+                  <div key={index} className="bg-gray-50 rounded-lg p-4 text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <div 
+                        className="w-3 h-3 rounded-full mr-2" 
+                        style={{ backgroundColor: vehicle.color }}
+                      ></div>
+                      <h3 className="text-sm font-medium text-gray-900">{vehicle.type}</h3>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-600">Efficiency</p>
-                        <p className="font-semibold text-green-600">{vehicle.efficiency}%</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-600">Avg Deliveries</p>
-                        <p className="font-semibold text-blue-600">{vehicle.avgDeliveries}</p>
-                      </div>
+                    <div className="space-y-1">
+                      <p className="text-xs text-gray-600">
+                        Efficiency: <span className="font-semibold text-green-600">{vehicle.efficiency}%</span>
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Productivity: <span className="font-semibold text-blue-600">{vehicle.productivity} ppt</span>
+                      </p>
                     </div>
                   </div>
                 ))}
