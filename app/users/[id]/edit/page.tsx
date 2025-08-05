@@ -78,7 +78,7 @@ export default function EditUserPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ id: userId, ...updateData }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {

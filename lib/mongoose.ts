@@ -34,14 +34,21 @@ export async function connectToDatabase(): Promise<Mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+      serverSelectionTimeoutMS: 8000, // 8 seconds timeout
       socketTimeoutMS: 45000, // 45 seconds socket timeout
       maxPoolSize: 10, // Maintain up to 10 socket connections
       minPoolSize: 5, // Maintain a minimum of 5 socket connections
       maxIdleTimeMS: 30000, // Close connections after 30 seconds of inactivity
+      retryWrites: true, // Retry writes on failure
+      retryReads: true, // Retry reads on failure
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI as string, opts);
+    cached.promise = Promise.race([
+      mongoose.connect(MONGODB_URI as string, opts),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('MongoDB connection timeout')), 10000)
+      )
+    ]);
   }
 
   try {

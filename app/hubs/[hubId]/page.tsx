@@ -153,7 +153,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
     if (!editData) return;
 
     try {
-      const response = await fetch(`/api/v1/hubs/${hubId}`, {
+      const response = await fetch(`/api/hubs/${hubId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

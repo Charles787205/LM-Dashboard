@@ -148,7 +148,7 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
         }
       };
 
-      const response = await fetch('/api/v1/reports', {
+      const response = await fetch('/api/reports', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

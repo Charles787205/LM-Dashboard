@@ -67,7 +67,7 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
   useEffect(() => {
     const fetchHub = async () => {
       try {
-        const response = await fetch(`/api/v1/hubs/${hubId}`);
+        const response = await fetch(`/api/hubs/${hubId}`);
         const result = await response.json();
         
         if (result.success) {
@@ -88,7 +88,7 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const response = await fetch(`/api/v1/reports?hubId=${hubId}`);
+        const response = await fetch(`/api/reports?hubId=${hubId}`);
         const result = await response.json();
         
         if (result.success) {
@@ -151,7 +151,7 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await fetch(`/api/v1/hubs/${hubId}/report-template`);
+      const response = await fetch(`/api/hubs/${hubId}/report-template`);
       
       if (!response.ok) {
         throw new Error('Failed to download template');
