@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import HubSidebar from '@/components/HubSidebar';
-import { Edit3, Save, X } from 'lucide-react';
+import { Edit3, Save, X, MessageCircle, Plus } from 'lucide-react';
 
 interface Hub {
   _id: string;
@@ -51,6 +51,19 @@ interface Report {
   updatedAt?: string;
 }
 
+interface HubComment {
+  _id: string;
+  hub_id: string;
+  user_id: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  comment: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function HubDetailPage({ params }: { params: Promise<{ hubId: string }> }) {
   const resolvedParams = use(params);
   const hubId = resolvedParams.hubId;
@@ -61,6 +74,9 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Hub | null>(null);
+  const [latestComment, setLatestComment] = useState<HubComment | null>(null);
+  const [showAddComment, setShowAddComment] = useState(false);
+  const [newComment, setNewComment] = useState('');
 
   // Fetch hub data
   useEffect(() => {
@@ -103,6 +119,26 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
 
     if (hub) {
       fetchReports();
+    }
+  }, [hubId, hub]);
+
+  // Fetch latest comment
+  useEffect(() => {
+    const fetchLatestComment = async () => {
+      try {
+        const response = await fetch(`/api/hubs/${hubId}/comments`);
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setLatestComment(result.data);
+        }
+      } catch (err) {
+        console.error('Error fetching latest comment:', err);
+      }
+    };
+
+    if (hub) {
+      fetchLatestComment();
     }
   }, [hubId, hub]);
 
@@ -179,6 +215,33 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
   const handleCancel = () => {
     setEditData(hub);
     setIsEditing(false);
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const response = await fetch(`/api/hubs/${hubId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ comment: newComment.trim() }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setLatestComment(result.data);
+        setNewComment('');
+        setShowAddComment(false);
+      } else {
+        throw new Error(result.error || 'Failed to add comment');
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      alert('Failed to add comment. Please try again.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -378,7 +441,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
             </div>
           </div>
 
-          {/* Cost and Profit Overview - Smaller Cards */}
+          {/* Cost and Comment Overview */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {/* Cost per Parcel */}
             <div className="bg-white rounded-lg shadow p-6">
@@ -456,10 +519,76 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               </div>
             </div>
             
-            {/* Profit per Parcel */}
+            {/* Latest Comment */}
+            <div className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Latest Comment</h3>
+                <button
+                  onClick={() => setShowAddComment(true)}
+                  className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Comment
+                </button>
+              </div>
+              
+              {showAddComment ? (
+                <div className="space-y-3">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Enter your comment..."
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    rows={3}
+                    maxLength={1000}
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">{newComment.length}/1000</span>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => {
+                          setShowAddComment(false);
+                          setNewComment('');
+                        }}
+                        className="px-3 py-1 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleAddComment}
+                        disabled={!newComment.trim()}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Add Comment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : latestComment ? (
+                <div className="space-y-3">
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-gray-800 text-sm">{latestComment.comment}</p>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>By {latestComment.user_id.name}</span>
+                    <span>{new Date(latestComment.createdAt).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500 text-sm">No comments yet</p>
+                  <p className="text-gray-400 text-xs">Be the first to add a comment</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Profit per Parcel - Moved below */}
+          <div className="grid grid-cols-1 gap-6 mb-8">
             <div className="bg-white rounded-lg shadow p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Profit per Parcel</h3>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-4 max-w-md">
                 <div className="text-center">
                   {isEditing ? (
                     <div className="flex flex-col items-center">
