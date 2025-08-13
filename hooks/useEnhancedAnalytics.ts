@@ -57,10 +57,17 @@ interface AttendanceStats {
   totalBackroom: number;
 }
 
+interface SuccessfulDeliveriesChart {
+  name: string;
+  value: number;
+  color: string;
+}
+
 interface EnhancedAnalyticsData {
   hubPerformanceDetailed: HubPerformanceDetailed[];
   clientComparison: ClientComparison[];
   vehicleTypeData: VehicleTypeData[];
+  successfulDeliveriesChart: SuccessfulDeliveriesChart[];
   dailyPerformance: DailyPerformance[];
   attendanceStats: AttendanceStats;
   period: string;

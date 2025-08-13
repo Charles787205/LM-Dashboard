@@ -263,7 +263,6 @@ export async function GET(request: NextRequest) {
             successfulDeliveries: vehicleData.successful2W,
             efficiency: vehicleData.total2W > 0 ? Math.round((vehicleData.successful2W / vehicleData.total2W) * 100 * 10) / 10 : 0,
             avgDeliveries: vehicleData.total2W > 0 ? Math.round(vehicleData.successful2W / vehicleData.total2W * 10) / 10 : 0,
-            productivity: vehicleData.total2W > 0 ? Math.round((vehicleData.totalOutbound * 0.6) / vehicleData.total2W * 10) / 10 : 0,
             color: '#3B82F6'
           },
           {
@@ -272,7 +271,6 @@ export async function GET(request: NextRequest) {
             successfulDeliveries: vehicleData.successful3W,
             efficiency: vehicleData.total3W > 0 ? Math.round((vehicleData.successful3W / vehicleData.total3W) * 100 * 10) / 10 : 0,
             avgDeliveries: vehicleData.total3W > 0 ? Math.round(vehicleData.successful3W / vehicleData.total3W * 10) / 10 : 0,
-            productivity: vehicleData.total3W > 0 ? Math.round((vehicleData.totalOutbound * 0.3) / vehicleData.total3W * 10) / 10 : 0,
             color: '#10B981'
           },
           {
@@ -281,7 +279,23 @@ export async function GET(request: NextRequest) {
             successfulDeliveries: vehicleData.successful4W,
             efficiency: vehicleData.total4W > 0 ? Math.round((vehicleData.successful4W / vehicleData.total4W) * 100 * 10) / 10 : 0,
             avgDeliveries: vehicleData.total4W > 0 ? Math.round(vehicleData.successful4W / vehicleData.total4W * 10) / 10 : 0,
-            productivity: vehicleData.total4W > 0 ? Math.round((vehicleData.totalOutbound * 0.1) / vehicleData.total4W * 10) / 10 : 0,
+            color: '#F59E0B'
+          }
+        ],
+        successfulDeliveriesChart: [
+          {
+            name: '2-Wheeler',
+            value: vehicleData.successful2W,
+            color: '#3B82F6'
+          },
+          {
+            name: '3-Wheeler', 
+            value: vehicleData.successful3W,
+            color: '#10B981'
+          },
+          {
+            name: '4-Wheeler',
+            value: vehicleData.successful4W,
             color: '#F59E0B'
           }
         ],
