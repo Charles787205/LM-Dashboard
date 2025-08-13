@@ -24,7 +24,8 @@ import {
   MoreHorizontal,
   Menu,
   RefreshCw,
-  CalendarIcon
+  CalendarIcon,
+  MessageCircle
 } from 'lucide-react';
 import {
   LineChart,
@@ -44,6 +45,19 @@ import {
   Legend
 } from 'recharts';
 
+interface DashboardComment {
+  _id: string;
+  user_id: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  comment: string;
+  dashboard_type: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -53,6 +67,9 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedHubId, setSelectedHubId] = useState<string>('all');
   const [excludeSundays, setExcludeSundays] = useState(false);
+  const [dashboardComment, setDashboardComment] = useState<DashboardComment | null>(null);
+  const [showAddComment, setShowAddComment] = useState(false);
+  const [newComment, setNewComment] = useState('');
   
   // Fetch hubs for the selector
   const { hubs, loading: hubsLoading } = useHubs();
@@ -82,6 +99,54 @@ export default function Dashboard() {
 
   const toggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  // Fetch dashboard comment
+  useEffect(() => {
+    const fetchDashboardComment = async () => {
+      try {
+        const response = await fetch('/api/dashboard/comments?type=main');
+        const result = await response.json();
+        
+        if (result.success && result.data) {
+          setDashboardComment(result.data);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard comment:', err);
+      }
+    };
+
+    fetchDashboardComment();
+  }, []);
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const response = await fetch('/api/dashboard/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          comment: newComment.trim(),
+          dashboard_type: 'main'
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setDashboardComment(result.data);
+        setNewComment('');
+        setShowAddComment(false);
+      } else {
+        throw new Error(result.error || 'Failed to add comment');
+      }
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      alert('Failed to add comment. Please try again.');
+    }
   };
 
   // Sample data for charts (fallback if no real data)
@@ -534,6 +599,70 @@ export default function Dashboard() {
               {dashboardData?.stats.failedRate ? `${dashboardData.stats.failedRate.toFixed(1)}% failure rate` : '0% failure rate'}
             </span>
           </div>
+        </div>
+
+        {/* Dashboard Comment Section */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Dashboard Notes</h3>
+            <button
+              onClick={() => setShowAddComment(true)}
+              className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Note
+            </button>
+          </div>
+          
+          {showAddComment ? (
+            <div className="space-y-3">
+              <textarea
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                placeholder="Add a note about the current dashboard data..."
+                className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                rows={3}
+                maxLength={1000}
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-500">{newComment.length}/1000</span>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => {
+                      setShowAddComment(false);
+                      setNewComment('');
+                    }}
+                    className="px-3 py-1 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors text-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAddComment}
+                    disabled={!newComment.trim()}
+                    className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Add Note
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : dashboardComment ? (
+            <div className="space-y-3">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-gray-800 text-sm">{dashboardComment.comment}</p>
+              </div>
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>By {dashboardComment.user_id.name}</span>
+                <span>{new Date(dashboardComment.createdAt).toLocaleDateString()}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <MessageCircle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-500 text-sm">No notes yet</p>
+              <p className="text-gray-400 text-xs">Add a note to track important dashboard insights</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
