@@ -122,11 +122,11 @@ export default function Dashboard() {
         if (dashboardFilters.hubId != 'all') {
           url = `/api/dashboard/comments?type=filtered&hub_id=${dashboardFilters.hubId}`
         }
-        console.log(url);
+      
         const response = await fetch(url);
         const result = await response.json();
         
-        if (result.success && result.data) {
+        if (result.success ) {
           setDashboardComment(result.data);
         }
       } catch (err) {
@@ -622,14 +622,15 @@ export default function Dashboard() {
         {/* Dashboard Comment Section */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Dashboard Notes</h3>
-            <button
+              <h3 className="text-lg font-semibold text-gray-900">{dashboardFilters.hubId === 'all' ? 'Dashboard Notes' : 'Hub Notes'}</h3>
+              {dashboardFilters.hubId == "all" && <button
               onClick={() => setShowAddComment(true)}
               className="flex items-center px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add Note
-            </button>
+            </button> }
+            
           </div>
           
           {showAddComment ? (
