@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongoose';
 import DashboardComment from '@/models/Dashboard_Comments';
+import Hub_Comments from '@/models/Hub_Comments';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
@@ -9,14 +10,23 @@ export async function GET(request: NextRequest) {
     await connectDB();
     
     const { searchParams } = new URL(request.url);
+    console.log(searchParams)
     const dashboardType = searchParams.get('type') || 'analytics';
-    
-    // Get latest comment for the dashboard type
-    const latestComment = await DashboardComment
-      .findOne({ dashboard_type: dashboardType })
-      .sort({ createdAt: -1 })
-      .populate('user_id', 'name email')
-      .lean();
+    const hubId = searchParams.get('hub_id') || 'all';
+    let latestComment;
+    if (dashboardType === 'main') {
+      latestComment = await DashboardComment
+        .findOne({ dashboard_type: dashboardType })
+        .sort({ createdAt: -1 })
+        .populate('user_id', 'name email')
+        .lean();
+    } else {
+      latestComment = await Hub_Comments
+        .findOne({ hub_id: hubId })
+        .sort({ createdAt: -1 })
+        .populate('user_id', 'name email')
+        .lean();
+    }
 
     return NextResponse.json({
       success: true,

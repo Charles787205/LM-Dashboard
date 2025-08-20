@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import {Sidebar} from '@/components';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useHubs } from '@/hooks/useHubs';
+import Hub_Comments from '@/models/Hub_Comments';
 import { 
   BarChart3, 
   Users, 
@@ -57,6 +58,18 @@ interface DashboardComment {
   createdAt: string;
   updatedAt: string;
 }
+interface HubComment {
+  _id: string;
+  user_id: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  comment: string;
+  hub_id: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -67,7 +80,7 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedHubId, setSelectedHubId] = useState<string>('all');
   const [excludeSundays, setExcludeSundays] = useState(false);
-  const [dashboardComment, setDashboardComment] = useState<DashboardComment | null>(null);
+  const [dashboardComment, setDashboardComment] = useState<DashboardComment  | HubComment | null>(null);
   const [showAddComment, setShowAddComment] = useState(false);
   const [newComment, setNewComment] = useState('');
   
@@ -105,7 +118,12 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardComment = async () => {
       try {
-        const response = await fetch('/api/dashboard/comments?type=main');
+        let url = `/api/dashboard/comments?type=main`
+        if (dashboardFilters.hubId != 'all') {
+          url = `/api/dashboard/comments?type=filtered&hub_id=${dashboardFilters.hubId}`
+        }
+        console.log(url);
+        const response = await fetch(url);
         const result = await response.json();
         
         if (result.success && result.data) {
@@ -117,7 +135,7 @@ export default function Dashboard() {
     };
 
     fetchDashboardComment();
-  }, []);
+  }, [dashboardFilters.hubId]);
 
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
