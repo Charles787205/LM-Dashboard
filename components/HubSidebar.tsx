@@ -38,9 +38,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
         
         <nav className="space-y-2">
           <Link
-            href="/hubs"
+            href="/(lastmile)/hubs"
             className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-              isActive('/hubs') 
+              isActive('/(lastmile)/hubs') 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                 : 'hover:bg-gray-100'
             }`}
@@ -122,7 +122,7 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
           
           <div className="border-t border-gray-200 pt-4 mt-4">
             <Link
-              href="/analytics"
+              href="/(lastmile)/analytics"
               className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
             </Link>
 
             <Link
-              href="/reports"
+              href="/(lastmile)/reports"
               className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

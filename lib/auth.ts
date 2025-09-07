@@ -142,11 +142,11 @@ export const authOptions: NextAuthOptions = {
         const correctBaseUrl = process.env.NEXTAUTH_URL || baseUrl
         console.log('Using correct baseUrl:', correctBaseUrl)
         
-        // If the URL is the root path after sign-in, redirect to dashboard
+        // If the URL is the root path after sign-in, redirect to dashboard selection
         if (url === '/' || url === correctBaseUrl) {
-          const dashboardUrl = `${correctBaseUrl}/hubs`
-          console.log('Redirecting to dashboard:', dashboardUrl)
-          return dashboardUrl
+          const dashboardSelectUrl = `${correctBaseUrl}/dashboard-select`
+          console.log('Redirecting to dashboard selection:', dashboardSelectUrl)
+          return dashboardSelectUrl
         }
         
         // Allows relative callback URLs
@@ -161,11 +161,11 @@ export const authOptions: NextAuthOptions = {
           return url
         }
         
-        console.log('Default redirect to dashboard:', `${correctBaseUrl}/hubs`)
-        return `${correctBaseUrl}/hubs`
+        console.log('Default redirect to dashboard selection:', `${correctBaseUrl}/dashboard-select`)
+        return `${correctBaseUrl}/dashboard-select`
       } catch (error) {
         console.error('Redirect callback error:', error)
-        return `${baseUrl}/hubs`
+        return `${baseUrl}/dashboard-select`
       }
     },
   },

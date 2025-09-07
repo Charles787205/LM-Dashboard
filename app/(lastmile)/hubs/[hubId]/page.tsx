@@ -293,7 +293,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-600 mb-4">{error || 'Hub not found'}</p>
-          <Link href="/hubs" className="text-blue-600 hover:text-blue-800">
+          <Link href="/(lastmile)/hubs" className="text-blue-600 hover:text-blue-800">
             ← Back to Hubs
           </Link>
         </div>

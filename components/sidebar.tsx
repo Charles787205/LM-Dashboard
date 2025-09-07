@@ -23,7 +23,10 @@ import {
   LogOut,
   Building2,
   MapPin,
-  X
+  X,
+  Truck,
+  Package,
+  Layers
 } from 'lucide-react';
 
 interface Hub {
@@ -70,38 +73,52 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
 
   const menuItems = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: Home,
+      id: 'dashboard-select',
+      label: 'Dashboard Select',
+      icon: Layers,
+      href: '/dashboard-select',
+      badge: null
+    },
+    {
+      id: 'lastmile-dashboard',
+      label: 'Last Mile Dashboard',
+      icon: Package,
       href: '/',
+      badge: null
+    },
+    {
+      id: 'transport-dashboard',
+      label: 'Transport Dashboard',
+      icon: Truck,
+      href: '/transport',
       badge: null
     },
     {
       id: 'hubs',
       label: 'Hubs',
       icon: Building2,
-      href: '/hubs',
+      href: '/(lastmile)/hubs',
       badge: null
     },
     {
       id: 'reports',
       label: 'Reports',
       icon: FileText,
-      href: '/reports',
+      href: '/(lastmile)/reports',
       badge: null
     },
     {
       id: 'analytics',
       label: 'Analytics',
       icon: BarChart3,
-      href: '/analytics',
+      href: '/(lastmile)/analytics',
       badge: null
     },
     {
       id: 'users',
       label: 'Users',
       icon: Users,
-      href: '/users',
+      href: '/(lastmile)/users',
       badge: '2.3k'
     }
   ];

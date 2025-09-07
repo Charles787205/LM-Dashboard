@@ -36,11 +36,13 @@ export default function Navbar({ title, backLink, actions }: NavbarProps) {
   }, []);
 
   const navItems = [
-    { name: 'Dashboard', href: '/' },
-    { name: 'Hubs', href: '/hubs' },
-    { name: 'Reports', href: '/reports' },
-    { name: 'Analytics', href: '/analytics' },
-    { name: 'Users', href: '/users' },
+    { name: 'Dashboard Select', href: '/dashboard-select' },
+    { name: 'Last Mile', href: '/' },
+    { name: 'Transport', href: '/transport' },
+    { name: 'Hubs', href: '/(lastmile)/hubs' },
+    { name: 'Reports', href: '/(lastmile)/reports' },
+    { name: 'Analytics', href: '/(lastmile)/analytics' },
+    { name: 'Users', href: '/(lastmile)/users' },
   ];
 
   const handleSignOut = () => {
@@ -111,6 +113,35 @@ export default function Navbar({ title, backLink, actions }: NavbarProps) {
                       <div className="font-medium">{session.user?.name}</div>
                       <div className="text-gray-500">{session.user?.email}</div>
                     </div>
+                    
+                    {/* Dashboard Selection */}
+                    <div className="border-b">
+                      <div className="px-4 py-2 text-xs text-gray-500 font-medium uppercase">
+                        Dashboards
+                      </div>
+                      <Link
+                        href="/dashboard-select"
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Dashboard Select
+                      </Link>
+                      <Link
+                        href="/"
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Last Mile Dashboard
+                      </Link>
+                      <Link
+                        href="/transport"
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        Transport Dashboard
+                      </Link>
+                    </div>
+                    
                     <button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
