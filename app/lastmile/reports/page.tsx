@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Sidebar } from '@/components';
 import { useReports } from '@/hooks/useReports';
 import { useHubs } from '@/hooks/useHubs';
 import { 
@@ -31,7 +30,6 @@ import {
 
 export default function ReportsPage() {
   const router = useRouter();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
   const [selectedHub, setSelectedHub] = useState('all');
   const [showHubSelectionModal, setShowHubSelectionModal] = useState(false);
@@ -41,10 +39,6 @@ export default function ReportsPage() {
   // Get reports and hubs from database
   const { reports, loading: reportsLoading, error: reportsError, refreshReports } = useReports();
   const { hubs, loading: hubsLoading } = useHubs();
-
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
 
   const handleAddReport = () => {
     setShowHubSelectionModal(true);
@@ -366,22 +360,13 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-      
+    <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleSidebar}
-                className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
               <h1 className="text-2xl font-bold text-gray-900">Reports & Analytics</h1>
             </div>
             <div className="flex items-center space-x-4">

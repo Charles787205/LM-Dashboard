@@ -62,7 +62,7 @@ const TransportSidebar: React.FC<TransportSidebarProps> = ({ className = '' }) =
     },
     {
       label: 'Users',
-      href: '/(lastmile)/users',
+      href: '/lastmile/users',
       icon: Users,
       description: 'User management'
     }

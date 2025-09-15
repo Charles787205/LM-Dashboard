@@ -38,9 +38,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
         
         <nav className="space-y-2">
           <Link
-            href="/(lastmile)/hubs"
+            href="/lastmile/hubs"
             className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-              isActive('/(lastmile)/hubs') 
+              isActive('/lastmile/hubs') 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                 : 'hover:bg-gray-100'
             }`}
@@ -52,9 +52,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
           </Link>
           
           <Link
-            href="/hubs/create"
+            href="/lastmile/hubs/create"
             className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-              isActive('/hubs/create') 
+              isActive('/lastmile/hubs/create') 
                 ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                 : 'hover:bg-gray-100'
             }`}
@@ -77,9 +77,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
               </div>
               
               <Link
-                href={`/hubs/${hubId}`}
+                href={`/lastmile/hubs/${hubId}`}
                 className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                  isActive(`/hubs/${hubId}`) 
+                  isActive(`/lastmile/hubs/${hubId}`) 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                     : 'hover:bg-gray-100'
                 }`}
@@ -91,9 +91,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
               </Link>
               
               <Link
-                href={`/hubs/${hubId}/reports`}
+                href={`/lastmile/hubs/${hubId}/reports`}
                 className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                  isActive(`/hubs/${hubId}/reports`) 
+                  isActive(`/lastmile/hubs/${hubId}/reports`) 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                     : 'hover:bg-gray-100'
                 }`}
@@ -105,9 +105,9 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
               </Link>
               
               <Link
-                href={`/hubs/${hubId}/reports/add`}
+                href={`/lastmile/hubs/${hubId}/reports/add`}
                 className={`flex items-center px-3 py-2 rounded-md transition-colors ${
-                  isActive(`/hubs/${hubId}/reports/add`) 
+                  isActive(`/lastmile/hubs/${hubId}/reports/add`) 
                     ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-700' 
                     : 'hover:bg-gray-100'
                 }`}
@@ -122,7 +122,7 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
           
           <div className="border-t border-gray-200 pt-4 mt-4">
             <Link
-              href="/(lastmile)/analytics"
+              href="/lastmile/analytics"
               className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,7 +132,7 @@ export default function HubSidebar({ currentPath = '', hubId }: HubSidebarProps)
             </Link>
 
             <Link
-              href="/(lastmile)/reports"
+              href="/lastmile/reports"
               className="flex items-center px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

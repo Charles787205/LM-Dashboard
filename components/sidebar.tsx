@@ -97,28 +97,28 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       id: 'hubs',
       label: 'Hubs',
       icon: Building2,
-      href: '/(lastmile)/hubs',
+      href: '/lastmile/hubs',
       badge: null
     },
     {
       id: 'reports',
       label: 'Reports',
       icon: FileText,
-      href: '/(lastmile)/reports',
+      href: '/lastmile/reports',
       badge: null
     },
     {
       id: 'analytics',
       label: 'Analytics',
       icon: BarChart3,
-      href: '/(lastmile)/analytics',
+      href: '/lastmile/analytics',
       badge: null
     },
     {
       id: 'users',
       label: 'Users',
       icon: Users,
-      href: '/(lastmile)/users',
+      href: '/lastmile/users',
       badge: '2.3k'
     }
   ];
@@ -336,9 +336,9 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
                   hubs.map((hub) => (
                     <Link
                       key={hub._id}
-                      href={`/hubs/${hub._id}`}
+                      href={`/lastmile/hubs/${hub._id}`}
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all duration-200 group ${
-                        pathname.startsWith(`/hubs/${hub._id}`)
+                        pathname.startsWith(`/lastmile/hubs/${hub._id}`)
                           ? 'bg-blue-50 text-blue-700 border border-blue-200'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}

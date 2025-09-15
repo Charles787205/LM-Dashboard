@@ -19,7 +19,7 @@ export default function HubsPageClient() {
                 <p className="text-gray-600 mt-1">Manage your delivery hubs</p>
               </div>
               <Link
-                href="/hubs/create"
+                href="/lastmile/hubs/create"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Create New Hub
@@ -52,7 +52,7 @@ export default function HubsPageClient() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <HubSidebar currentPath="/hubs" />
+      <HubSidebar currentPath="/lastmile/hubs" />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -72,7 +72,7 @@ export default function HubsPageClient() {
                 {loading ? 'Refreshing...' : 'Refresh'}
               </button>
               <Link
-                href="/hubs/create"
+                href="/lastmile/hubs/create"
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Create New Hub
@@ -101,7 +101,7 @@ export default function HubsPageClient() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Hubs Found</h3>
               <p className="text-gray-600 mb-4">Get started by creating your first hub.</p>
               <Link
-                href="/hubs/create"
+                href="/lastmile/hubs/create"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
               >
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@ export default function HubsPageClient() {
               {hubs.map((hub: any) => (
                 <Link
                   key={hub._id}
-                  href={`/hubs/${hub._id}`}
+                  href={`/lastmile/hubs/${hub._id}`}
                   className="bg-white rounded-lg shadow hover:shadow-md transition-shadow border border-gray-200 overflow-hidden group"
                 >
                   <div className="p-6">

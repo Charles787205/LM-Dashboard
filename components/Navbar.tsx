@@ -39,10 +39,10 @@ export default function Navbar({ title, backLink, actions }: NavbarProps) {
     { name: 'Dashboard Select', href: '/dashboard-select' },
     { name: 'Last Mile', href: '/' },
     { name: 'Transport', href: '/transport' },
-    { name: 'Hubs', href: '/(lastmile)/hubs' },
-    { name: 'Reports', href: '/(lastmile)/reports' },
-    { name: 'Analytics', href: '/(lastmile)/analytics' },
-    { name: 'Users', href: '/(lastmile)/users' },
+    { name: 'Hubs', href: '/lastmile/hubs' },
+    { name: 'Reports', href: '/lastmile/reports' },
+    { name: 'Analytics', href: '/lastmile/analytics' },
+    { name: 'Users', href: '/lastmile/users' },
   ];
 
   const handleSignOut = () => {

@@ -15,7 +15,7 @@ export default function NotFound() {
         </p>
         <div className="space-x-4">
           <Link
-            href="/(lastmile)/hubs"
+            href="/lastmile/hubs"
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
           >
             Back to Hubs

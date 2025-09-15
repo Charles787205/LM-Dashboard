@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Sidebar } from '@/components';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 import { useEnhancedAnalytics } from '@/hooks/useEnhancedAnalytics';
 import { 
@@ -40,7 +39,6 @@ import {
 } from 'recharts';
 
 export default function AnalyticsPage() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
   const [selectedMetric, setSelectedMetric] = useState('all');
 
@@ -55,15 +53,10 @@ export default function AnalyticsPage() {
     refetch: refetchEnhanced 
   } = useEnhancedAnalytics(selectedPeriod);
 
-  const toggleSidebar = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
-  };
-
   // Loading state
   if (loading || enhancedLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      <div className="min-h-screen bg-gray-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
@@ -77,8 +70,7 @@ export default function AnalyticsPage() {
   // Error state
   if (error || enhancedError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
-        <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      <div className="min-h-screen bg-gray-50">
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <AlertCircle className="w-8 h-8 text-red-600 mx-auto mb-4" />
@@ -229,22 +221,13 @@ export default function AnalyticsPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <Sidebar isCollapsed={sidebarCollapsed} onToggle={toggleSidebar} />
-      
+    <div className="min-h-screen bg-gray-50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <button
-                onClick={toggleSidebar}
-                className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
               <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
             </div>
             <div className="flex items-center space-x-4">
