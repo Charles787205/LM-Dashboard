@@ -105,7 +105,7 @@ export async function PUT(
         phone,
         role,
         position,
-        hubId,
+        hubId: hubId === '' ? null : hubId,
         hubName,
         status,
         employeeId,

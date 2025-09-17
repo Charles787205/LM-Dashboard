@@ -2,7 +2,6 @@
 
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import HubSidebar from '@/components/HubSidebar';
 import { Edit3, Save, X, MessageCircle, Plus } from 'lucide-react';
 
 interface Hub {
@@ -302,14 +301,9 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <HubSidebar currentPath={`/hubs/${hubId}`} hubId={hubId} />
-
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation Bar */}
-        <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+    <div>
+      {/* Top Navigation Bar */}
+      <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4 -mx-6 -mt-6 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {isEditing ? (
@@ -344,7 +338,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
             </div>
             <div className="flex items-center space-x-3">
               <Link
-                href={`/hubs/${hub._id}/reports/add`}
+                href={`/lastmile/hubs/${hub._id}/reports/add`}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
               >
                 Add Report
@@ -815,6 +809,6 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
           </div>
         </div>
       </div>
-    </div>
+    
   );
 }

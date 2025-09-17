@@ -323,8 +323,7 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <HubSidebar hubId={hubId} />
+     
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
@@ -590,7 +589,7 @@ export default function HubReportsPage({ params }: { params: Promise<{ hubId: st
                             <div className="flex items-center space-x-2">
                               <button 
                                 className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                                onClick={() => router.push(`/reports/${report._id}`)}
+                                onClick={() => router.push(`/lastmile/reports/${report._id}`)}
                                 title="View Report Details"
                               >
                                 <Eye className="w-4 h-4" />

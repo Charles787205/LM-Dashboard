@@ -25,6 +25,16 @@ export default function UsersPage() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('all');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    role: '',
+    hubId: '',
+    status: ''
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [userRole, setUserRole] = useState<string | null>(null);
 
@@ -50,7 +60,8 @@ export default function UsersPage() {
   const {
     data: usersData,
     loading,
-    error
+    error,
+    refetch
   } = useUsers({
     page: currentPage,
     limit: 10,
@@ -80,6 +91,67 @@ export default function UsersPage() {
     } catch (error) {
       alert('An unexpected error occurred');
       console.error('Error deleting user:', error);
+    }
+  };
+
+  const handleEditUser = (user: any) => {
+    setEditingUser(user);
+    setEditForm({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      role: user.role,
+      hubId: user.hubId || '',
+      status: user.status || 'active'
+    });
+    setShowEditModal(true);
+  };
+
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingUser(null);
+    setEditForm({
+      name: '',
+      email: '',
+      phone: '',
+      role: '',
+      hubId: '',
+      status: ''
+    });
+  };
+
+  const handleEditFormChange = (field: string, value: string) => {
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleUpdateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingUser) return;
+
+    try {
+      const response = await fetch(`/api/users/${(editingUser as any)._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editForm),
+      });
+
+      if (response.ok) {
+        refetch();
+        handleCloseEditModal();
+        alert('User updated successfully!');
+      } else {
+        const result = await response.json();
+        alert('Failed to update user: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Error updating user');
     }
   };
 
@@ -290,7 +362,10 @@ export default function UsersPage() {
                       </button>
                       {(userRole === 'admin' || userRole === 'manager') && (
                         <>
-                          <button className="text-green-600 hover:text-green-900 p-1">
+                          <button 
+                            onClick={() => handleEditUser(user)}
+                            className="text-green-600 hover:text-green-900 p-1"
+                          >
                             <Edit className="w-4 h-4" />
                           </button>
                           {userRole === 'admin' && (
@@ -330,6 +405,116 @@ export default function UsersPage() {
           </div>
         )}
       </div>
+
+      {/* Edit User Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-lg w-11/12 max-w-md">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold text-gray-900">Edit User</h2>
+              <button
+                onClick={handleCloseEditModal}
+                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-4">
+              <form onSubmit={handleUpdateUser} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => handleEditFormChange('name', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => handleEditFormChange('email', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Phone
+                  </label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => handleEditFormChange('phone', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Role
+                  </label>
+                  <select
+                    value={editForm.role}
+                    onChange={(e) => handleEditFormChange('role', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    required
+                  >
+                    <option value="">Select Role</option>
+                    <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="user">User</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => handleEditFormChange('status', e.target.value)}
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                    required
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                  </select>
+                </div>
+                
+                <div className="flex justify-end space-x-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseEditModal}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Update User
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

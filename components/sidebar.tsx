@@ -79,20 +79,7 @@ export default function Sidebar({ isCollapsed = false, onToggle }: SidebarProps)
       href: '/dashboard-select',
       badge: null
     },
-    {
-      id: 'lastmile-dashboard',
-      label: 'Last Mile Dashboard',
-      icon: Package,
-      href: '/',
-      badge: null
-    },
-    {
-      id: 'transport-dashboard',
-      label: 'Transport Dashboard',
-      icon: Truck,
-      href: '/transport',
-      badge: null
-    },
+    
     {
       id: 'hubs',
       label: 'Hubs',

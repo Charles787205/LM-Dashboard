@@ -161,7 +161,7 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
       if (result.success) {
         setSuccess('Report created successfully!');
         setTimeout(() => {
-          router.push(`/hubs/${hubId}/reports`);
+          router.push(`/lastmile/hubs/${hubId}/reports`);
         }, 1500);
       } else {
         setError(result.error || 'Failed to create report');
@@ -205,8 +205,7 @@ export default function AddReportPage({ params }: { params: Promise<{ hubId: str
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <HubSidebar hubId={hubId} />
+     
       
       {/* Main Content */}
       <div className="flex-1 flex flex-col">

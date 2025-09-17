@@ -93,8 +93,7 @@ export const authOptions: NextAuthOptions = {
       return true;
     },
     async jwt({ token, user }: any) {
-      console.log('JWT callback - user:', user);
-      console.log('JWT callback - token:', token);
+    
       
       if (user) {
         // This runs when user signs in

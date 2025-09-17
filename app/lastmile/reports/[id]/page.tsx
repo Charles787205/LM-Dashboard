@@ -150,7 +150,7 @@ export default function ReportDetailsPage({ params }: { params: Promise<{ id: st
     }
 
     try {
-      const response = await fetch(`api/reports/${resolvedParams.id}`, {
+      const response = await fetch(`/api/reports/${resolvedParams.id}`, {
         method: 'DELETE',
       });
 
@@ -158,8 +158,8 @@ export default function ReportDetailsPage({ params }: { params: Promise<{ id: st
 
       if (result.success) {
         alert('Report deleted successfully!');
-        router.push('/reports');
-      } else {
+        router.push('/lastmile/reports');
+      } else { 
         throw new Error(result.error || 'Failed to delete report');
       }
     } catch (err) {

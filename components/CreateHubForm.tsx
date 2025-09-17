@@ -59,7 +59,7 @@ export default function CreateHubForm() {
       const result = await response.json();
 
       if (result.success) {
-        router.push('/hubs');
+        router.push('/lastmile/hubs');
         router.refresh();
       } else {
         setError(result.error || 'Failed to create hub');
@@ -77,7 +77,7 @@ export default function CreateHubForm() {
       <div className="max-w-2xl mx-auto p-6">
         <div className="mb-6">
           <button
-            onClick={() => router.push('/hubs')}
+            onClick={() => router.push('/lastmile/hubs')}
             className="text-blue-600 hover:text-blue-800 mb-4 inline-block"
           >
             ← Back to Hubs
