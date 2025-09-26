@@ -11,36 +11,20 @@ function LoginContent() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Clear any corrupted sessions on load
-    const clearCorruptedSession = async () => {
-      try {
-        const session = await getSession();
-        if (session) {
-          router.push('/');
-        }
-      } catch (error) {
-        // If there's an error getting the session, clear it
-        console.log('Clearing corrupted session...');
-        await signOut({ redirect: false });
-      }
-    };
-
-    clearCorruptedSession();
-
-    // Check for error in URL params
+    // Only check for auth errors in URL params, don't check session to avoid redirect loops
     const errorParam = searchParams?.get('error');
     if (errorParam === 'AccessDenied') {
       setError('Your email address is not authorized to access this system. Please contact your administrator to request access.');
     } else if (errorParam) {
       setError('Authentication failed. Please try again.');
     }
-  }, [router, searchParams]);
+  }, [searchParams]);
 
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
       await signIn('google', {
-        callbackUrl: '/',
+        callbackUrl: '/dashboard-select',
         redirect: true,
       });
     } catch (error) {

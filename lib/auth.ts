@@ -49,13 +49,18 @@ export const authOptions: NextAuthOptions = {
         try {
           await connectToDatabase();
           
+          console.log('Sign-in attempt for email:', user.email);
+          
           // Check if user exists in our database
           const existingUser = await User.findOne({ email: user.email });
           
           if (!existingUser) {
             // User not in database, deny access
+            console.log('User not found in database:', user.email);
             return false;
           }
+          
+          console.log('User found:', existingUser.email, 'Status:', existingUser.status);
           
           // Update user information with OAuth data on sign-in
           const updateData: any = {
@@ -68,8 +73,10 @@ export const authOptions: NextAuthOptions = {
             updateData.name = user.name || '';
             updateData.image = user.image || '';
             updateData.emailVerified = new Date();
+            console.log('Activating pending user:', user.email);
           } else if (existingUser.status !== 'active') {
             // User is inactive, deny access
+            console.log('User is inactive:', user.email, 'Status:', existingUser.status);
             return false;
           }
 
@@ -84,6 +91,7 @@ export const authOptions: NextAuthOptions = {
             { new: true }
           );
           
+          console.log('Sign-in successful for:', user.email);
           return true;
         } catch (error) {
           console.error('Error checking user authorization:', error);
@@ -117,8 +125,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: any) {
-      console.log('Session callback - token:', token);
-      console.log('Session callback - session:', session);
+      
       
       // Add user data to session from token
       if (session?.user && token) {
@@ -133,39 +140,25 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      console.log('Redirect callback - url:', url)
-      console.log('Redirect callback - baseUrl:', baseUrl)
+      console.log('Redirect callback - URL:', url, 'BaseURL:', baseUrl)
       
-      try {
-        // Use the provided baseUrl as fallback if NEXTAUTH_URL is not set
-        const correctBaseUrl = process.env.NEXTAUTH_URL || baseUrl
-        console.log('Using correct baseUrl:', correctBaseUrl)
-        
-        // If the URL is the root path after sign-in, redirect to dashboard selection
-        if (url === '/' || url === correctBaseUrl) {
-          const dashboardSelectUrl = `${correctBaseUrl}/dashboard-select`
-          console.log('Redirecting to dashboard selection:', dashboardSelectUrl)
-          return dashboardSelectUrl
-        }
-        
-        // Allows relative callback URLs
-        if (url.startsWith("/")) {
-          const redirectUrl = `${correctBaseUrl}${url}`
-          console.log('Redirecting to:', redirectUrl)
-          return redirectUrl
-        }
-        // Allows callback URLs on the same origin
-        else if (new URL(url).origin === new URL(correctBaseUrl).origin) {
-          console.log('Same origin redirect to:', url)
-          return url
-        }
-        
-        console.log('Default redirect to dashboard selection:', `${correctBaseUrl}/dashboard-select`)
-        return `${correctBaseUrl}/dashboard-select`
-      } catch (error) {
-        console.error('Redirect callback error:', error)
+      // If it's a relative path, make it absolute
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`
+      }
+      
+      // If it's already a full URL and on same origin, use it
+      if (url.startsWith(baseUrl)) {
+        return url
+      }
+      
+      // For root redirect, go to dashboard-select
+      if (url === baseUrl || url === '/' || url === `${baseUrl}/`) {
         return `${baseUrl}/dashboard-select`
       }
+      
+      // Default fallback
+      return `${baseUrl}/dashboard-select`
     },
   },
   session: {

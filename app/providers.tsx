@@ -10,7 +10,12 @@ export default function Providers({
   session?: any;
 }) {
   return (
-    <SessionProvider session={session}>
+    <SessionProvider 
+      session={session}
+      basePath="/api/auth"
+      refetchInterval={5 * 60} // Refetch session every 5 minutes
+      refetchOnWindowFocus={false} // Don't refetch on window focus to reduce requests
+    >
       {children}
     </SessionProvider>
   );

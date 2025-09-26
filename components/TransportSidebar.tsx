@@ -13,7 +13,9 @@ import {
   Home,
   BarChart3,
   Users,
-  Settings
+  Settings,
+  MapPin,
+  Building2
 } from 'lucide-react';
 
 interface TransportSidebarProps {
@@ -44,6 +46,18 @@ const TransportSidebar: React.FC<TransportSidebarProps> = ({ className = '' }) =
       href: '/transport/linehauls',
       icon: Route,
       description: 'Manage linehaul operations'
+    },
+    {
+      label: 'Locations',
+      href: '/transport/location',
+      icon: MapPin,
+      description: 'Manage transport locations'
+    },
+    {
+      label: 'Vendors',
+      href: '/transport/vendors',
+      icon: Building2,
+      description: 'Manage transport service vendors'
     }
   ];
 

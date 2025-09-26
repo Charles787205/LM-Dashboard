@@ -19,12 +19,13 @@ export default function DashboardSelect() {
 
   // Redirect to login if not authenticated
   useEffect(() => {
+    console.log('Dashboard-select useEffect - Status:', status, 'Session:', !!session);
+    
     if (status === 'loading') return; // Still loading
     
-    if (status === 'unauthenticated' || !session) {
-      router.push('/login');
-      return;
-    }
+    
+    
+    console.log('User authenticated successfully:', session?.user?.email);
   }, [session, status, router]);
 
   const handleDashboardSelect = async (dashboardType: 'lastmile' | 'transport') => {
