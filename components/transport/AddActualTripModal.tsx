@@ -20,13 +20,19 @@ interface Location {
 }
 
 interface Plan {
-  _id: string;
-  date: string;
+  _id?: string;
+  date: Date | string;
   origin: {
+    _id?: string;
     name: string;
     type: string;
-  };
+  } | string;
   numberOfTrips: number;
+  fulfillment?: number;
+  remarks?: string;
+  actuals?: any[];
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
 }
 
 interface AddActualTripModalProps {
@@ -132,7 +138,7 @@ export default function AddActualTripModal({
     
     try {
       const actualData = {
-        plan: plan._id,
+        plan: plan._id || '', // Handle undefined case
         vehicle: formData.vehicle,
         status: formData.status,
         linhaulTripNumber: formData.linhaulTripNumber,
@@ -206,7 +212,7 @@ export default function AddActualTripModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Add Actual Trip</h2>
             <p className="text-gray-600 mt-1">
-              Plan: {plan.origin.name} - {new Date(plan.date).toLocaleDateString()}
+              Plan: {typeof plan.origin === 'string' ? plan.origin : plan.origin.name} - {new Date(plan.date).toLocaleDateString()}
             </p>
           </div>
           <button
