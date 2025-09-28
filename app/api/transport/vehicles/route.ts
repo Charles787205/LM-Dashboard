@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
     
+    // Ensure models are registered
+    const DriverModel = Driver;
+    const VendorModel = Vendor;
+    
     const url = new URL(request.url);
     const vendorId = url.searchParams.get('vendorId');
     
@@ -58,6 +62,10 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB();
+
+    // Ensure models are registered
+    const DriverModel = Driver;
+    const VendorModel = Vendor;
 
     const body = await request.json();
     const { vehicleType, vehicle_plate_number, driver, gender, vendor } = body;
@@ -128,6 +136,10 @@ export async function PUT(request: NextRequest) {
     }
 
     await connectDB();
+
+    // Ensure models are registered
+    const DriverModel = Driver;
+    const VendorModel = Vendor;
 
     const body = await request.json();
     const { _id, vehicleType, vehicle_plate_number, driver, gender, vendor } = body;
@@ -204,6 +216,10 @@ export async function DELETE(request: NextRequest) {
     }
 
     await connectDB();
+
+    // Ensure models are registered
+    const DriverModel = Driver;
+    const VendorModel = Vendor;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
