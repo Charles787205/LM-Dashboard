@@ -5,6 +5,7 @@ import { connectToDatabase } from '@/lib/mongoose';
 import Actual from '@/models/transport/Actual';
 import Plan from '@/models/transport/Plan';
 import Location from '@/models/transport/Location';  // Import to register schema
+import Vehicle from '@/models/transport/Vehicles';
 
 export async function GET(request: Request) {
   try {
@@ -17,23 +18,24 @@ export async function GET(request: Request) {
       );
     }
 
-    const url = new URL(request.url);
-    const planId = url.searchParams.get('planId');
-
     await connectToDatabase();
     
+    const url = new URL(request.url);
+    const planId = url.searchParams.get('planId');
+    
     let actuals;
+    
     if (planId) {
       // Get actuals for a specific plan
       actuals = await Actual.find({ plan: planId })
-        .populate('plan', 'date origin numberOfTrips')
+        .populate('plan', 'date origin numberOfTrips fulfillment remarks')
         .populate('vehicle', 'plateNumber')
         .populate('tripDetail.destination', 'name type')
-        .sort({ createdAt: -1 });
+        .sort({ tripSequence: 1 });
     } else {
       // Get all actuals
-      actuals = await Actual.find({})
-        .populate('plan', 'date origin numberOfTrips')
+      actuals = await Actual.find()
+        .populate('plan', 'date origin numberOfTrips fulfillment remarks')
         .populate('vehicle', 'plateNumber')
         .populate('tripDetail.destination', 'name type')
         .sort({ createdAt: -1 });
@@ -113,15 +115,20 @@ export async function POST(request: Request) {
       const savedActual = await newActual.save();
 
       // Add this actual to the plan's actuals array
-      await Plan.findByIdAndUpdate(
-        plan,
-        { $push: { actuals: savedActual._id } },
-        { new: true }
-      );
+      try {
+        await Plan.findByIdAndUpdate(
+          plan,
+          { $push: { actuals: savedActual._id } },
+          { new: false } // Don't return the updated document to avoid serialization issues
+        );
+      } catch (planUpdateError) {
+        console.error('Error updating plan actuals:', planUpdateError);
+        // Continue with response even if plan update fails
+      }
 
       // Populate the saved actual for response
       const populatedActual = await Actual.findById(savedActual._id)
-        .populate('plan', 'date origin numberOfTrips')
+        .populate('plan', 'date origin numberOfTrips fulfillment remarks')
         .populate('vehicle', 'plateNumber')
         .populate('tripDetail.destination', 'name type');
       

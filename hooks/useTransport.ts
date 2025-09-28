@@ -5,6 +5,10 @@ interface TransportStats {
   totalDeliveries: number;
   totalFuel: number;
   totalCost: number;
+  totalPlans: number;
+  totalActuals: number;
+  fulfillmentRate: number;
+  averageTripsPerDay: number;
   activeVehicles: number;
   maintenanceVehicles: number;
   idleVehicles: number;

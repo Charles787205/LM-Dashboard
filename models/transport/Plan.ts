@@ -29,8 +29,21 @@ const PlanSchema = new Schema({
 
 // Virtual field to calculate fulfillment percentage
 PlanSchema.virtual('fulfillmentPercentage').get(function() {
-  if (this.numberOfTrips === 0) return 0;
-  return Math.round((this.actuals.length / this.numberOfTrips) * 100);
+  // Ensure numberOfTrips exists and is valid
+  if (!this.numberOfTrips || this.numberOfTrips === 0) return 0;
+  
+  // Handle case where actuals might be undefined, null, or not an array
+  let actualsCount = 0;
+  if (this.actuals) {
+    if (Array.isArray(this.actuals)) {
+      actualsCount = this.actuals.length;
+    } else if (typeof this.actuals === 'number') {
+      // In case it's already a count
+      actualsCount = this.actuals;
+    }
+  }
+  
+  return Math.round((actualsCount / this.numberOfTrips) * 100);
 });
 
 // Ensure virtual fields are serialized

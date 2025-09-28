@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { BarChart3, TrendingUp, TrendingDown, Truck, Clock, Package, DollarSign, Calendar } from 'lucide-react';
+import { BarChart3, TrendingUp, TrendingDown, Truck, Clock, Package, DollarSign, Calendar, Target } from 'lucide-react';
 
 const TransportAnalyticsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -22,7 +22,8 @@ const TransportAnalyticsPage = () => {
     totalDistance: 12584,
     fuelEfficiency: 8.4,
     totalCost: 48750,
-    avgDeliveryTime: 2.3
+    avgDeliveryTime: 2.3,
+    fulfillmentRate: 91.0
   };
 
   const trends = {
@@ -138,22 +139,16 @@ const TransportAnalyticsPage = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Cost</p>
-              <p className="text-3xl font-bold text-gray-900">${metrics.totalCost.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-600">Fulfillment Rate</p>
+              <p className="text-3xl font-bold text-gray-900">{metrics.fulfillmentRate || 91.0}%</p>
             </div>
             <div className="h-12 w-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <DollarSign className="h-6 w-6 text-yellow-600" />
+              <Target className="h-6 w-6 text-yellow-600" />
             </div>
           </div>
           <div className="mt-4 flex items-center">
-            {trends.cost > 0 ? (
-              <TrendingUp className="h-4 w-4 text-red-500 mr-1" />
-            ) : (
-              <TrendingDown className="h-4 w-4 text-green-500 mr-1" />
-            )}
-            <span className={`text-sm ${trends.cost > 0 ? 'text-red-600' : 'text-green-600'}`}>
-              {Math.abs(trends.cost)}%
-            </span>
+            <TrendingUp className="h-4 w-4 text-green-500 mr-1" />
+            <span className="text-sm text-green-600">+4.1%</span>
             <span className="text-sm text-gray-500 ml-2">vs last period</span>
           </div>
         </div>

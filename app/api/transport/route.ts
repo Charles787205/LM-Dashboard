@@ -61,11 +61,15 @@ export async function GET(request: Request) {
       totalDeliveries: dailyTrends.reduce((sum, day) => sum + day.deliveries, 0),
       totalFuel: dailyTrends.reduce((sum, day) => sum + day.fuel, 0),
       totalCost: dailyTrends.reduce((sum, day) => sum + day.cost, 0),
+      totalPlans: 156,
+      totalActuals: 142,
+      fulfillmentRate: Math.round((142 / 156) * 100 * 10) / 10, // 91.0%
+      averageTripsPerDay: Math.round((142 / 7) * 10) / 10, // Assuming weekly period, 20.3 trips/day
       activeVehicles: 45,
       maintenanceVehicles: 8,
       idleVehicles: 12,
       outOfServiceVehicles: 3,
-      averageEfficiency: dailyTrends.reduce((sum, day) => sum + day.efficiency, 0) / dailyTrends.length
+      averageEfficiency: Math.round((dailyTrends.reduce((sum, day) => sum + day.efficiency, 0) / dailyTrends.length) * 10) / 10
     };
 
     // Fleet status breakdown
@@ -121,10 +125,10 @@ export async function GET(request: Request) {
 
     // Key metrics
     const keyMetrics = {
-      fleetUtilization: Math.round((stats.activeVehicles / (stats.activeVehicles + stats.maintenanceVehicles + stats.idleVehicles + stats.outOfServiceVehicles)) * 1000) / 10,
+      fleetUtilization: Math.round((stats.activeVehicles / (stats.activeVehicles + stats.maintenanceVehicles + stats.idleVehicles + stats.outOfServiceVehicles)) * 100 * 10) / 10,
       onTimeDelivery: Math.round((routePerformance.reduce((sum, route) => sum + route.onTime, 0) / routePerformance.length) * 10) / 10,
       averageFuelEfficiency: Math.round(stats.averageEfficiency * 10) / 10,
-      costPerDelivery: Math.round((stats.totalCost / stats.totalDeliveries) * 100) / 100,
+      costPerDelivery: Math.round((stats.totalCost / stats.totalDeliveries) * 10) / 10,
       routeOptimization: Math.round((routePerformance.reduce((sum, route) => sum + route.efficiency, 0) / routePerformance.length) * 10) / 10,
       totalTrips: dailyTrends.reduce((sum, day) => sum + Math.round(day.deliveries / 15), 0) // Assuming ~15 deliveries per trip
     };

@@ -16,6 +16,11 @@ export async function GET(request: Request) {
 
     await connectToDatabase();
 
+    // Ensure models are registered
+    const LocationModel = Location;
+    const ActualModel = Actual;
+    const PlanModel = Plan;
+
     // Test basic Plan model first without populate
     console.log('Testing Plan model registration...');
     const planCount = await Plan.countDocuments();
@@ -57,6 +62,11 @@ export async function POST(request: Request) {
     }
 
     await connectToDatabase();
+
+    // Ensure models are registered
+    const LocationModel = Location;
+    const ActualModel = Actual;
+    const PlanModel = Plan;
 
     // Create new plan in MongoDB
     try {
@@ -132,6 +142,11 @@ export async function PUT(request: Request) {
 
     await connectToDatabase();
 
+    // Ensure models are registered
+    const LocationModel = Location;
+    const ActualModel = Actual;
+    const PlanModel = Plan;
+
     // Find and update plan in MongoDB
     try {
       const updateData: any = {};
@@ -206,6 +221,11 @@ export async function DELETE(request: Request) {
     }
 
     await connectToDatabase();
+
+    // Ensure models are registered
+    const LocationModel = Location;
+    const ActualModel = Actual;
+    const PlanModel = Plan;
 
     // Delete plan from MongoDB
     const deletedPlan = await Plan.findByIdAndDelete(planId);

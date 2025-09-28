@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useDashboardAnalytics } from '@/hooks/useDashboardAnalytics';
 import { useEnhancedAnalytics } from '@/hooks/useEnhancedAnalytics';
+import { useHubs } from '@/hooks/useHubs';
 import { 
   TrendingUp,
   TrendingDown,
@@ -23,7 +24,8 @@ import {
   Zap,
   Filter,
   Download,
-  RefreshCw
+  RefreshCw,
+  ChevronDown
 } from 'lucide-react';
 import {
   BarChart,
@@ -38,12 +40,24 @@ import {
   Line
 } from 'recharts';
 
+interface Hub {
+  _id: string;
+  name: string;
+  client: string;
+}
+
 export default function AnalyticsPage() {
   const [selectedPeriod, setSelectedPeriod] = useState('last-7-days');
   const [selectedMetric, setSelectedMetric] = useState('all');
+  const [selectedHubId, setSelectedHubId] = useState('all');
 
-  // Fetch real dashboard data
-  const { data: dashboardData, loading, error, refetch } = useDashboardAnalytics();
+  // Fetch hubs for the dropdown
+  const { hubs, loading: hubsLoading } = useHubs();
+
+  // Fetch real dashboard data with hub filter
+  const { data: dashboardData, loading, error, refetch } = useDashboardAnalytics({
+    hubId: selectedHubId
+  });
   
   // Fetch enhanced analytics data based on selected period
   const { 
@@ -228,7 +242,19 @@ export default function AnalyticsPage() {
         <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Analytics Dashboard
+                {selectedHubId !== 'all' && (
+                  <span className="ml-2 text-lg font-medium text-blue-600">
+                    - {hubs.find((h: Hub) => h._id === selectedHubId)?.name || 'Selected Hub'}
+                  </span>
+                )}
+              </h1>
+              {selectedHubId !== 'all' && (
+                <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                  Hub Filter Active
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-4">
               <select
@@ -241,6 +267,21 @@ export default function AnalyticsPage() {
                 <option value="last-90-days">Last 90 Days</option>
                 <option value="this-year">This Year</option>
               </select>
+              
+              <select
+                value={selectedHubId}
+                onChange={(e) => setSelectedHubId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={hubsLoading}
+              >
+                <option value="all">All Hubs</option>
+                {hubs.map((hub: Hub) => (
+                  <option key={hub._id} value={hub._id}>
+                    {hub.name} ({hub.client})
+                  </option>
+                ))}
+              </select>
+              
               <button 
                 onClick={() => { refetch(); refetchEnhanced(); }}
                 className="flex items-center px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
@@ -268,6 +309,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="text-sm text-blue-700">
                   Period: {selectedPeriod.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())} | 
+                  Hub: {selectedHubId === 'all' ? 'All Hubs' : (hubs.find((h: Hub) => h._id === selectedHubId)?.name || 'Selected Hub')} | 
                   Total Reports: {dashboardData.stats.totalReports} | 
                   {enhancedData && (
                     <>Recent Activity: {enhancedData.dateRange.start.split('T')[0]} to {enhancedData.dateRange.end.split('T')[0]}</>

@@ -60,7 +60,14 @@ interface DashboardData {
   failedDeliveryBreakdown: FailedDeliveryReason[];
 }
 
-export const useDashboardAnalytics = () => {
+interface DashboardFilters {
+  hubId?: string;
+  period?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export const useDashboardAnalytics = (filters?: DashboardFilters) => {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -70,7 +77,23 @@ export const useDashboardAnalytics = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/dashboard');
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (filters?.hubId && filters.hubId !== 'all') {
+        queryParams.append('hubId', filters.hubId);
+      }
+      if (filters?.period) {
+        queryParams.append('period', filters.period);
+      }
+      if (filters?.startDate) {
+        queryParams.append('startDate', filters.startDate);
+      }
+      if (filters?.endDate) {
+        queryParams.append('endDate', filters.endDate);
+      }
+      
+      const url = `/api/dashboard${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      const response = await fetch(url);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -88,7 +111,7 @@ export const useDashboardAnalytics = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [filters?.hubId, filters?.period, filters?.startDate, filters?.endDate]);
 
   const refetch = () => {
     fetchDashboardData();

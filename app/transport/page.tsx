@@ -26,7 +26,8 @@ import {
   MapPin,
   Clock,
   Fuel,
-  Package
+  Package,
+  ClipboardList
 } from 'lucide-react';
 
 export default function TransportDashboard() {
@@ -64,49 +65,40 @@ export default function TransportDashboard() {
   // Transport stats
   const transportStats = [
     {
-      id: 'active-vehicles',
-      label: 'Active Vehicles',
-      value: transportData?.stats?.activeVehicles || 45,
-      change: '+2.5%',
+      id: 'total-plans',
+      label: 'Total Plans',
+      value: transportData?.stats?.totalPlans || 156,
+      change: '+8.2%',
       isPositive: true,
-      icon: Truck,
+      icon: ClipboardList,
       color: 'blue'
     },
     {
-      id: 'total-distance',
-      label: 'Total Distance',
-      value: `${(transportData?.stats?.totalDistance || 28450)}km`,
-      change: '+5.1%',
-      isPositive: true,
-      icon: MapPin,
-      color: 'green'
-    },
-    {
-      id: 'total-deliveries',
-      label: 'Total Deliveries',
-      value: transportData?.stats?.totalDeliveries || 1247,
+      id: 'total-actuals',
+      label: 'Total Actuals',
+      value: transportData?.stats?.totalActuals || 142,
       change: '+12.3%',
       isPositive: true,
       icon: Package,
+      color: 'green'
+    },
+    {
+      id: 'fulfillment-rate',
+      label: 'Fulfillment Rate',
+      value: `${transportData?.stats?.fulfillmentRate || 91.0}%`,
+      change: '+4.1%',
+      isPositive: true,
+      icon: TrendingUp,
       color: 'purple'
     },
     {
-      id: 'avg-efficiency',
-      label: 'Avg Efficiency',
-      value: `${transportData?.stats?.averageEfficiency || 94.2}%`,
-      change: '-1.2%',
-      isPositive: false,
+      id: 'avg-trips-per-day',
+      label: 'Avg Trips Per Day',
+      value: `${transportData?.stats?.averageTripsPerDay || 23.5}`,
+      change: '+2.8%',
+      isPositive: true,
       icon: Clock,
       color: 'orange'
-    },
-    {
-      id: 'total-cost',
-      label: 'Total Cost',
-      value: `₱${(transportData?.stats?.totalCost || 487500).toLocaleString()}`,
-      change: '-3.8%',
-      isPositive: true,
-      icon: DollarSign,
-      color: 'red'
     }
   ];
 
