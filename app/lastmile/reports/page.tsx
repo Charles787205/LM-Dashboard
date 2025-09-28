@@ -657,7 +657,7 @@ export default function ReportsPage() {
                             <div className="flex items-center gap-2">
                               <button 
                                 className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
-                                onClick={() => router.push(`/reports/${report._id}`)}
+                                onClick={() => router.push(`/lastmile/reports/${report._id}`)}
                                 title="View Report Details"
                               >
                                 <Eye className="w-4 h-4" />
