@@ -10,7 +10,7 @@ interface Plan {
     _id: string;
     name: string;
     type: string;
-  } | string; // Can be populated object or string for backward compatibility
+  } | string | null; // Can be populated object, string, or null
   numberOfTrips: number;
   fulfillment: number;
   remarks?: string;
@@ -120,7 +120,7 @@ const PlanList: React.FC<PlanListProps> = ({ plans, onEdit, onDelete, onAddActua
                     <div className="flex items-center">
                       <MapPin className="h-4 w-4 text-gray-400 mr-2" />
                       <span className="text-sm text-gray-900">
-                        {typeof plan.origin === 'object' ? plan.origin.name : plan.origin}
+                        {plan.origin && typeof plan.origin === 'object' ? plan.origin.name : (plan.origin || 'No origin set')}
                       </span>
                     </div>
                   </td>

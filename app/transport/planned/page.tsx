@@ -27,7 +27,7 @@ interface Plan {
     _id: string;
     name: string;
     type: string;
-  } | string; // Can be populated object or string for backward compatibility
+  } | string | null; // Can be populated object, string, or null
   numberOfTrips: number;
   fulfillment: number;
   remarks?: string;

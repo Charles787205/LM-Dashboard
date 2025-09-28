@@ -26,7 +26,7 @@ interface Plan {
     _id?: string;
     name: string;
     type: string;
-  } | string;
+  } | string | null;
   numberOfTrips: number;
   fulfillment?: number;
   remarks?: string;
