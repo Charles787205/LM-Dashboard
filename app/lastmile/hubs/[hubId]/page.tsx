@@ -793,7 +793,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <Link
-                              href={`/reports/${report._id}`}
+                              href={`/lastmile/reports/${report._id}`}
                               className="text-blue-600 hover:text-blue-900"
                             >
                               View Details
