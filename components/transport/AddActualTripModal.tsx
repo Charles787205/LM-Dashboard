@@ -212,7 +212,7 @@ export default function AddActualTripModal({
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Add Actual Trip</h2>
             <p className="text-gray-600 mt-1">
-              Plan: {typeof plan.origin === 'string' ? plan.origin : plan.origin.name} - {new Date(plan.date).toLocaleDateString()}
+              Plan: {plan.origin && typeof plan.origin === 'object' ? plan.origin.name : (plan.origin || 'No origin set')} - {new Date(plan.date).toLocaleDateString()}
             </p>
           </div>
           <button
