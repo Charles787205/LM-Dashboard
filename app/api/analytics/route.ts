@@ -4,6 +4,7 @@ import Report from '@/models/Reports';
 import Hub from '@/models/Hubs';
 import FailedDelivery from '@/models/Failed_Deliveries';
 import Attendance from '@/models/Attendance';
+import { Types } from 'mongoose';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const period = searchParams.get('period') || 'last-7-days';
+    const hubId = searchParams.get('hubId');
     
     // Calculate date range based on period
     const now = new Date();
@@ -33,12 +35,23 @@ export async function GET(request: NextRequest) {
         startDate.setDate(now.getDate() - 7);
     }
 
+    // Build base match criteria
+    const matchCriteria: any = {
+      createdAt: { $gte: startDate }
+    };
+
+    // Add hub filter if provided
+    if (hubId && hubId !== 'all') {
+      const hubObjectId = Types.ObjectId.isValid(hubId) 
+        ? new Types.ObjectId(hubId) 
+        : hubId;
+      matchCriteria.hub = hubObjectId;
+    }
+
     // Get detailed hub performance with client information
     const hubPerformanceDetailed = await Report.aggregate([
       {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
+        $match: matchCriteria
       },
       {
         $lookup: {
@@ -106,9 +119,7 @@ export async function GET(request: NextRequest) {
     // Get client comparison data
     const clientComparison = await Report.aggregate([
       {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
+        $match: matchCriteria
       },
       {
         $lookup: {
@@ -157,9 +168,7 @@ export async function GET(request: NextRequest) {
     // Get vehicle type analytics based on trips data with successful deliveries
     const vehicleAnalytics = await Report.aggregate([
       {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
+        $match: matchCriteria
       },
       {
         $group: {
@@ -186,9 +195,7 @@ export async function GET(request: NextRequest) {
     // Get time-based performance trends
     const dailyPerformance = await Report.aggregate([
       {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
+        $match: matchCriteria
       },
       {
         $group: {
@@ -229,9 +236,7 @@ export async function GET(request: NextRequest) {
     // Get attendance analytics
     const attendanceStats = await Report.aggregate([
       {
-        $match: {
-          createdAt: { $gte: startDate }
-        }
+        $match: matchCriteria
       },
       {
         $group: {

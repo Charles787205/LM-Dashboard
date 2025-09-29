@@ -77,7 +77,13 @@ interface EnhancedAnalyticsData {
   };
 }
 
-export const useEnhancedAnalytics = (period: string = 'last-7-days') => {
+interface AnalyticsFilters {
+  period?: string;
+  hubId?: string;
+}
+
+export const useEnhancedAnalytics = (filters: AnalyticsFilters = {}) => {
+  const { period = 'last-7-days', hubId } = filters;
   const [data, setData] = useState<EnhancedAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +93,14 @@ export const useEnhancedAnalytics = (period: string = 'last-7-days') => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(`/api/analytics?period=${period}`);
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      queryParams.append('period', period);
+      if (hubId && hubId !== 'all') {
+        queryParams.append('hubId', hubId);
+      }
+      
+      const response = await fetch(`/api/analytics?${queryParams.toString()}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -110,7 +123,7 @@ export const useEnhancedAnalytics = (period: string = 'last-7-days') => {
 
   useEffect(() => {
     fetchAnalyticsData();
-  }, [period]);
+  }, [period, hubId]);
 
   const refetch = () => {
     fetchAnalyticsData();

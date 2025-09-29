@@ -59,13 +59,16 @@ export default function AnalyticsPage() {
     hubId: selectedHubId
   });
   
-  // Fetch enhanced analytics data based on selected period
+  // Fetch enhanced analytics data based on selected period and hub
   const { 
     data: enhancedData, 
     loading: enhancedLoading, 
     error: enhancedError, 
     refetch: refetchEnhanced 
-  } = useEnhancedAnalytics(selectedPeriod);
+  } = useEnhancedAnalytics({
+    period: selectedPeriod,
+    hubId: selectedHubId
+  });
 
   // Loading state
   if (loading || enhancedLoading) {
