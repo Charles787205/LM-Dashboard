@@ -63,6 +63,13 @@ interface SuccessfulDeliveriesChart {
   color: string;
 }
 
+interface FailedDeliveryBreakdown {
+  reason: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
 interface EnhancedAnalyticsData {
   hubPerformanceDetailed: HubPerformanceDetailed[];
   clientComparison: ClientComparison[];
@@ -70,6 +77,7 @@ interface EnhancedAnalyticsData {
   successfulDeliveriesChart: SuccessfulDeliveriesChart[];
   dailyPerformance: DailyPerformance[];
   attendanceStats: AttendanceStats;
+  failedDeliveryBreakdown: FailedDeliveryBreakdown[];
   period: string;
   dateRange: {
     start: string;

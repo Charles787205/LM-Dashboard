@@ -168,17 +168,19 @@ export default function AnalyticsPage() {
     efficiency: hub.successRate > 95 ? 'Excellent' : hub.successRate > 90 ? 'Good' : 'Average'
   }));
 
-  // Calculate failed delivery reasons (you might want to add this to your API)
-  const failedDeliveryReasons = dashboardData.failedDeliveryBreakdown.length > 0 
-    ? dashboardData.failedDeliveryBreakdown 
-    : [
-        { reason: 'Not at Home', count: Math.floor(dashboardData.stats.totalFailed * 0.325), percentage: 32.5, color: 'bg-red-500' },
-        { reason: 'No Cash Available', count: Math.floor(dashboardData.stats.totalFailed * 0.204), percentage: 20.4, color: 'bg-orange-500' },
-        { reason: 'Postpone', count: Math.floor(dashboardData.stats.totalFailed * 0.181), percentage: 18.1, color: 'bg-yellow-500' },
-        { reason: 'Refuse', count: Math.floor(dashboardData.stats.totalFailed * 0.135), percentage: 13.5, color: 'bg-purple-500' },
-        { reason: 'Unreachable', count: Math.floor(dashboardData.stats.totalFailed * 0.09), percentage: 9.0, color: 'bg-blue-500' },
-        { reason: 'Invalid Address', count: Math.floor(dashboardData.stats.totalFailed * 0.065), percentage: 6.5, color: 'bg-gray-500' }
-      ];
+  // Calculate failed delivery reasons using enhanced data when available
+  const failedDeliveryReasons = enhancedData?.failedDeliveryBreakdown && enhancedData.failedDeliveryBreakdown.length > 0
+    ? enhancedData.failedDeliveryBreakdown
+    : dashboardData.failedDeliveryBreakdown.length > 0 
+      ? dashboardData.failedDeliveryBreakdown 
+      : [
+          { reason: 'Not at Home', count: Math.floor(dashboardData.stats.totalFailed * 0.325), percentage: 32.5, color: 'bg-red-500' },
+          { reason: 'No Cash Available', count: Math.floor(dashboardData.stats.totalFailed * 0.204), percentage: 20.4, color: 'bg-orange-500' },
+          { reason: 'Postpone', count: Math.floor(dashboardData.stats.totalFailed * 0.181), percentage: 18.1, color: 'bg-yellow-500' },
+          { reason: 'Refuse', count: Math.floor(dashboardData.stats.totalFailed * 0.135), percentage: 13.5, color: 'bg-purple-500' },
+          { reason: 'Unreachable', count: Math.floor(dashboardData.stats.totalFailed * 0.09), percentage: 9.0, color: 'bg-blue-500' },
+          { reason: 'Invalid Address', count: Math.floor(dashboardData.stats.totalFailed * 0.065), percentage: 6.5, color: 'bg-gray-500' }
+        ];
 
   const vehicleTypeData = enhancedData?.vehicleTypeData || [
     { 

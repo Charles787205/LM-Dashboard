@@ -662,7 +662,7 @@ export default function HubDetailPage({ params }: { params: Promise<{ hubId: str
               <div className="flex items-center justify-between">
                 <h3 className="text-xl font-semibold text-gray-900">Recent Reports</h3>
                 <Link
-                  href={`/hubs/${hub._id}/reports`}
+                  href={`/lastmile/hubs/${hub._id}/reports`}
                   className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                 >
                   View All Reports →

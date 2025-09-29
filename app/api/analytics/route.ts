@@ -249,6 +249,39 @@ export async function GET(request: NextRequest) {
       }
     ]);
 
+    // Get failed delivery breakdown with hub filtering
+    const failedDeliveryBreakdown = await FailedDelivery.aggregate([
+      ...(hubId && hubId !== 'all' ? [{
+        $match: {
+          hub: Types.ObjectId.isValid(hubId) ? new Types.ObjectId(hubId) : hubId
+        }
+      }] : []),
+      {
+        $group: {
+          _id: null,
+          canceled_bef_delivery: { $sum: '$canceled_bef_delivery' },
+          no_cash_available: { $sum: '$no_cash_available' },
+          postpone: { $sum: '$postpone' },
+          not_at_home: { $sum: '$not_at_home' },
+          refuse: { $sum: '$refuse' },
+          unreachable: { $sum: '$unreachable' },
+          invalid_address: { $sum: '$invalid_address' }
+        }
+      }
+    ]);
+
+    const failedBreakdown = failedDeliveryBreakdown[0] || {
+      canceled_bef_delivery: 0,
+      no_cash_available: 0,
+      postpone: 0,
+      not_at_home: 0,
+      refuse: 0,
+      unreachable: 0,
+      invalid_address: 0
+    };
+
+    const totalFailedReasons = Object.values(failedBreakdown).reduce((a: number, b: any) => a + (typeof b === 'number' ? b : 0), 0) as number;
+
     return NextResponse.json({
       success: true,
       data: {
@@ -320,6 +353,44 @@ export async function GET(request: NextRequest) {
           totalHubLead: 0,
           totalBackroom: 0
         },
+        failedDeliveryBreakdown: totalFailedReasons > 0 ? [
+          {
+            reason: 'Not at Home',
+            count: failedBreakdown.not_at_home,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.not_at_home / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-red-500'
+          },
+          {
+            reason: 'No Cash Available',
+            count: failedBreakdown.no_cash_available,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.no_cash_available / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-orange-500'
+          },
+          {
+            reason: 'Postpone',
+            count: failedBreakdown.postpone,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.postpone / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-yellow-500'
+          },
+          {
+            reason: 'Refuse',
+            count: failedBreakdown.refuse,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.refuse / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-purple-500'
+          },
+          {
+            reason: 'Unreachable',
+            count: failedBreakdown.unreachable,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.unreachable / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-blue-500'
+          },
+          {
+            reason: 'Invalid Address',
+            count: failedBreakdown.invalid_address,
+            percentage: totalFailedReasons > 0 ? Math.round((failedBreakdown.invalid_address / totalFailedReasons) * 100 * 10) / 10 : 0,
+            color: 'bg-gray-500'
+          }
+        ] : [],
         period,
         dateRange: {
           start: startDate.toISOString(),
