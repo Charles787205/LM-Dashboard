@@ -64,7 +64,7 @@ const ActualSchema = new Schema({
   },
   status: {
     type: String,
-    enum: ["completed", "canceled"],
+    enum: ["completed", "canceled", "pending"],
     required: true,
   },
   linhaulTripNumber: {

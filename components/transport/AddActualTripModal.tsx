@@ -56,7 +56,7 @@ export default function AddActualTripModal({
   // Form data
   const [formData, setFormData] = useState({
     vehicle: '',
-    status: 'completed' as 'completed' | 'canceled',
+    status: 'completed' as 'completed' | 'canceled' | 'pending',
     linhaulTripNumber: '',
     callTime: '',
     arrival: '',
@@ -261,6 +261,7 @@ export default function AddActualTripModal({
               >
                 <option value="completed">Completed</option>
                 <option value="canceled">Canceled</option>
+                <option value="pending">Pending</option>
               </select>
             </div>
 

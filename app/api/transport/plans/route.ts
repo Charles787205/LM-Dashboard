@@ -6,6 +6,7 @@ import { connectToDatabase } from '@/lib/mongoose';
 import Location from '@/models/transport/Location';
 import Actual from '@/models/transport/Actual';
 import Plan from '@/models/transport/Plan';
+import Vehicle from '@/models/transport/Vehicles';
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
@@ -20,6 +21,7 @@ export async function GET(request: Request) {
     const LocationModel = Location;
     const ActualModel = Actual;
     const PlanModel = Plan;
+    const VehicleModel = Vehicle;
 
     // Test basic Plan model first without populate
     console.log('Testing Plan model registration...');
@@ -29,6 +31,19 @@ export async function GET(request: Request) {
     // Get all plans from MongoDB and populate origin location and actuals
     const plans = await Plan.find({})
       .populate('origin', 'name type')
+      .populate({
+        path: 'actuals',
+        populate: [
+          {
+            path: 'vehicle',
+            select: 'vehicle_plate_number vehicleType'
+          },
+          {
+            path: 'tripDetail.destination',
+            select: 'name type'
+          }
+        ]
+      })
       .sort({ createdAt: -1 });
     console.log('Plans fetched:', plans.length);
 

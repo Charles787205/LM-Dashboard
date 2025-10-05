@@ -67,7 +67,7 @@ export default function TransportDashboard() {
     {
       id: 'total-plans',
       label: 'Total Plans',
-      value: transportData?.stats?.totalPlans || 156,
+      value: transportData?.stats?.totalPlans || 0,
       change: '+8.2%',
       isPositive: true,
       icon: ClipboardList,
@@ -76,7 +76,7 @@ export default function TransportDashboard() {
     {
       id: 'total-actuals',
       label: 'Total Actuals',
-      value: transportData?.stats?.totalActuals || 142,
+      value: transportData?.stats?.totalActuals || 0,
       change: '+12.3%',
       isPositive: true,
       icon: Package,
@@ -85,7 +85,7 @@ export default function TransportDashboard() {
     {
       id: 'fulfillment-rate',
       label: 'Fulfillment Rate',
-      value: `${transportData?.stats?.fulfillmentRate || 91.0}%`,
+      value: `${transportData?.stats?.fulfillmentRate || 0}%`,
       change: '+4.1%',
       isPositive: true,
       icon: TrendingUp,
@@ -94,7 +94,7 @@ export default function TransportDashboard() {
     {
       id: 'avg-trips-per-day',
       label: 'Avg Trips Per Day',
-      value: `${transportData?.stats?.averageTripsPerDay || 23.5}`,
+      value: `${transportData?.stats?.averageTripsPerDay || 0}`,
       change: '+2.8%',
       isPositive: true,
       icon: Clock,
@@ -215,32 +215,6 @@ export default function TransportDashboard() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Key Metrics */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Key Transport Metrics</h3>
-          <div className="text-sm text-gray-500">Last updated: {new Date().toLocaleTimeString()}</div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="text-center">
-            <div className="text-3xl font-bold text-blue-600 mb-2">
-              {transportData?.stats?.averageEfficiency || 8.4}L/100km
-            </div>
-            <div className="text-sm text-gray-600">Average Fuel Efficiency</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-green-600 mb-2">2.3h</div>
-            <div className="text-sm text-gray-600">Average Delivery Time</div>
-          </div>
-          <div className="text-center">
-            <div className="text-3xl font-bold text-purple-600 mb-2">
-              {(transportData?.stats?.totalDistance || 12584).toLocaleString()}km
-            </div>
-            <div className="text-sm text-gray-600">Total Distance Covered</div>
-          </div>
-        </div>
       </div>
 
       {/* Charts */}

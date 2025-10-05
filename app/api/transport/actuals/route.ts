@@ -29,14 +29,28 @@ export async function GET(request: Request) {
       // Get actuals for a specific plan
       actuals = await Actual.find({ plan: planId })
         .populate('plan', 'date origin numberOfTrips fulfillment remarks')
-        .populate('vehicle', 'plateNumber')
+        .populate({
+          path: 'plan',
+          populate: {
+            path: 'origin',
+            select: 'name type'
+          }
+        })
+        .populate('vehicle', 'vehicle_plate_number vehicleType')
         .populate('tripDetail.destination', 'name type')
         .sort({ tripSequence: 1 });
     } else {
       // Get all actuals
       actuals = await Actual.find()
         .populate('plan', 'date origin numberOfTrips fulfillment remarks')
-        .populate('vehicle', 'plateNumber')
+        .populate({
+          path: 'plan',
+          populate: {
+            path: 'origin',
+            select: 'name type'
+          }
+        })
+        .populate('vehicle', 'vehicle_plate_number vehicleType')
         .populate('tripDetail.destination', 'name type')
         .sort({ createdAt: -1 });
     }
