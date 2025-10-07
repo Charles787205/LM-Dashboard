@@ -19,15 +19,16 @@ export async function GET() {
     let totalFulfillment = 0;
 
     for (const plan of plans) {
+      const planIdStr = plan._id ? String(plan._id) : '';
       const planActuals = actuals.filter(actual => 
-        actual.plan && actual.plan.toString() === plan._id.toString()
+        actual.plan && String(actual.plan) === planIdStr
       );
       
       const planFulfillment = plan.numberOfTrips > 0 ? 
         (planActuals.length / plan.numberOfTrips) * 100 : 0;
       
       fulfillmentDetails.push({
-        planId: plan._id,
+  planId: String(plan._id),
         plannedTrips: plan.numberOfTrips,
         actualTrips: planActuals.length,
         fulfillmentPercent: planFulfillment,
@@ -46,13 +47,13 @@ export async function GET() {
       totalFulfillment,
       averageFulfillment,
       rawPlans: plans.map(p => ({
-        id: p._id,
+        id: String(p._id),
         numberOfTrips: p.numberOfTrips,
         date: p.date
       })),
       rawActuals: actuals.map(a => ({
-        id: a._id,
-        planId: a.plan,
+        id: String(a._id),
+        planId: a.plan ? String(a.plan) : null,
         status: a.status,
         createdAt: a.createdAt
       }))
@@ -60,6 +61,7 @@ export async function GET() {
 
   } catch (error) {
     console.error('Debug error:', error);
-    return NextResponse.json({ error: 'Debug failed', details: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : String(error);
+    return NextResponse.json({ error: 'Debug failed', details: message }, { status: 500 });
   }
 }

@@ -7,10 +7,7 @@ import Plan from '@/models/transport/Plan';
 import Location from '@/models/transport/Location';
 import Vehicle from '@/models/transport/Vehicles';
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, { params }: any) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -68,10 +65,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, { params }: any) {
   try {
     const session = await getServerSession(authOptions);
     
